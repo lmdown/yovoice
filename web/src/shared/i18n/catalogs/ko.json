@@ -71,6 +71,9 @@
   "@yovoice.activity.synthesizing": {
     "defaultMessage": "모델 로드 또는 음성 합성 중"
   },
+  "@yovoice.activity.generatingMusic": {
+    "defaultMessage": "모델 로드 또는 음악 생성 중"
+  },
   "@yovoice.activity.verifying": {
     "defaultMessage": "모델 확인 중"
   },

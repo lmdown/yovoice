@@ -395,7 +395,12 @@ func (e *Engine) Generate(ctx context.Context, executable string, m schema.Insta
 			return "", err
 		}
 	}
-	progress(msg.ActivitySynthesizing, nil)
+	// [fork-local] P1-2：音乐家族（ace_step/yue2/stable_audio）显示「生成音乐」，其余显示「合成语音」。
+	if catalog.IsMusic(definition.Family) {
+		progress(msg.ActivityGeneratingMusic, nil)
+	} else {
+		progress(msg.ActivitySynthesizing, nil)
+	}
 	var result taskResult
 	if d.Runtime != nil && d.Runtime.Streaming {
 		var callback func(string) error

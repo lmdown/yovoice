@@ -101,18 +101,18 @@ test('导入文件配音：文本、Markdown 与 GBK 编码进入语音作品，
   await expect(page.getByText('文本超过 12000 字，请拆分成几个文件后分别导入。')).toBeVisible();
 });
 
-test('存储设置：展示数据目录与占用明细，可更改位置与清理残留', async ({ page }, testInfo) => {
+// [fork-local] forkUsesAppDataDir=true：改造版数据目录由 WORKBENCH_DATA 固定，隐藏「更改位置」入口；
+// 保留目录展示/占用明细/打开文件夹/清理残留。恢复上游时把 fork-config 里的开关改回 false。
+test('存储设置：展示数据目录与占用明细，可打开文件夹与清理残留（改造版隐藏更改位置）', async ({ page }, testInfo) => {
   await page.goto('/');
   await page.getByTestId('nav-settings').click();
   await expect(page.getByRole('heading', { name: '存储' })).toBeVisible();
   await expect(page.getByText('数据存储目录')).toBeVisible();
   await expect(page.getByText(/占用：总计/)).toBeVisible();
-  await expect(page.getByRole('button', { name: '更改位置' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '更改位置' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: '打开文件夹' })).toBeVisible();
   await page.getByRole('button', { name: '清理残留' }).click();
   await expect(page.getByText('没有发现超过 24 小时的残留文件。')).toBeVisible();
-  await page.getByRole('button', { name: '更改位置' }).click();
-  await expect(page.getByText(/^数据已复制到新目录。请完全退出 yovoice 并重新打开应用生效/)).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('storage-settings.png'), animations: 'disabled' });
 });
 

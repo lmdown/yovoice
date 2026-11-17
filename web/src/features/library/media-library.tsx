@@ -19,6 +19,7 @@ import { TapeCover } from './tape-cover';
 import { WaveRing } from './wave-ring';
 import { overflowTitle } from '../../shared/ui/overflow-title';
 import { useHotkey, useHotkeyAria, useHotkeyText, withHotkey } from '../../shared/hotkeys/hotkeys';
+import { forkHideCommunity } from '../../shared/lib/fork-config';
 
 // 版本记录一次先渲染的条数，更早的点“显示更早的”再展开，记录很多时打开页面和状态推送都不用重建整张列表。
 const historyBatch = 30;
@@ -142,7 +143,7 @@ export function MediaLibrary({ page, state, query, onQueryChange, track, auditio
             <Button label={t('@yovoice.history.configuration')} size="sm" variant="ghost" isIconOnly icon={<Info />} onClick={() => setDetails(item)} />
             <DropdownMenu className="audio-actions-menu" presentation="popover" alignment="end" hasChevron={false} button={{ label: t('@yovoice.history.audioActions'), size: 'sm', variant: 'ghost', isIconOnly: true, icon: <MoreHorizontal /> }} items={[
               { label: t('@yovoice.app.exportVersion'), onClick: () => exportItem(item) },
-              ...(kind === 'music' && !item.stemOf ? [{ label: t('@yovoice.community.share'), onClick: () => share(item) }] : []),
+              ...(kind === 'music' && !item.stemOf && !forkHideCommunity ? [{ label: t('@yovoice.community.share'), onClick: () => share(item) }] : []),
               ...(quick ? [{ label: t('@yovoice.caption.menu'), onClick: () => exportCaptions(item) }, { label: t('@yovoice.voice.save'), onClick: () => editVoice(item) }, { label: t('@yovoice.character.saveAs'), onClick: () => saveCharacter(item) }] : []),
               ...(kind === 'music' && resing(item) ? [{ label: t('@yovoice.resing.action'), onClick: resing(item)! }] : []),
               ...(kind === 'music' && !item.stemOf && !separated.has(item.id) ? [{ label: t('@yovoice.stems.separate'), onClick: () => separate(item) }] : []),

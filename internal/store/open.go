@@ -17,7 +17,7 @@ import (
 
 func New(root string) (store *Store, err error) {
 	defer func() { diag.Log(root, "state.open", "platform", runtime.GOOS, "error", diag.Error(err)) }()
-	for _, d := range []string{"", "voices", "outputs", "downloads", "runtime", "models", "logs"} {
+	for _, d := range []string{"", "voices", "outputs", "downloads", "runtime", "models", "logs", "seed"} {
 		if e := os.MkdirAll(filepath.Join(root, d), 0700); e != nil {
 			return nil, e
 		}

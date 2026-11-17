@@ -71,6 +71,9 @@
   "@yovoice.activity.synthesizing": {
     "defaultMessage": "正在載入模型或合成語音"
   },
+  "@yovoice.activity.generatingMusic": {
+    "defaultMessage": "正在載入模型或生成音樂"
+  },
   "@yovoice.activity.verifying": {
     "defaultMessage": "正在驗證模型"
   },

@@ -59,6 +59,8 @@ const (
 	ActivityEngineStart     Code = "@yovoice.activity.engineStart"
 	ActivityGenerate        Code = "@yovoice.activity.generate"
 	ActivitySynthesizing    Code = "@yovoice.activity.synthesizing"
+	// [fork-local] P1-2：音乐生成区别于语音，避免误显示「合成语音」。
+	ActivityGeneratingMusic Code = "@yovoice.activity.generatingMusic"
 	ActivityStreamingAudio  Code = "@yovoice.activity.streamingAudio"
 	ActivitySavingAudio     Code = "@yovoice.activity.savingAudio"
 	ActivityRendering       Code = "@yovoice.activity.rendering"
@@ -290,7 +292,7 @@ func All() []Code {
 		ErrVoiceDescriptionRequired, ErrOmniAttributes, ErrSpeakerInvalid,
 		ActivityDownload, ActivityDownloading, ActivityVerifying, ActivityModelConverting,
 		ActivityRuntimeDownload, ActivityRuntimeExtract, ActivityEngineStart,
-		ActivityGenerate, ActivitySynthesizing, ActivityStreamingAudio, ActivitySavingAudio, ActivityRendering,
+		ActivityGenerate, ActivitySynthesizing, ActivityGeneratingMusic, ActivityStreamingAudio, ActivitySavingAudio, ActivityRendering,
 		ActivityCompleted, ActivityCancelled, ActivityPaused, ActivityFailed, ActivityInterrupted, ActivityRelocate, ActivityPlanMelody, ActivityTranscribe, ActivitySeparateVocals, ActivityAlignLyrics, ActivityRecognize, ActivityTranscribeSpeech, ActivityAlignText, ActivitySeparateStems, ActivityTranscribeMIDI, ActivityResing,
 		ErrBusy, ErrProxyURL, ErrModelDirAbsolute, ErrModelDirSpace,
 		ErrDownloadHTTP, ErrDownloadRange, ErrDownloadSize, ErrDownloadIncomplete,

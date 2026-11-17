@@ -71,6 +71,9 @@
   "@yovoice.activity.synthesizing": {
     "defaultMessage": "モデルを読み込み中、または音声を合成中"
   },
+  "@yovoice.activity.generatingMusic": {
+    "defaultMessage": "モデルを読み込み中、または音楽を生成中"
+  },
   "@yovoice.activity.verifying": {
     "defaultMessage": "モデルを検証中"
   },

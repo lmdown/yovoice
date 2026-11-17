@@ -30,6 +30,7 @@ import { FeatureSettings } from './feature-settings';
 import { AppearanceSettings } from './appearance-settings';
 import { TranscribeSettings } from './transcribe-settings';
 import { HotkeySettings } from './hotkey-settings';
+import { forkHideCommunity } from '../../shared/lib/fork-config';
 
 // 资源表格依赖较多，切到资源页时才加载。
 const AssetsPage = lazy(() => import('../library/assets-page').then(module => ({ default: module.AssetsPage })));
@@ -78,7 +79,8 @@ export function Settings({ state, catalog, engine, draft, run, focus, active, on
       <Tab value="engine" label={t('@yovoice.settings.tabEngine')} panelId="engine-panel" />
       {aiServiceHidden(state.preferences) ? null : <Tab value="ai" label={t('@yovoice.settings.tabAI')} panelId="ai-panel" />}
       {featureHidden(state.preferences, 'assistant') ? null : <Tab value="assistant" label={t('@yovoice.assistant.title')} panelId="assistant-panel" />}
-      <Tab value="community" label={t('@yovoice.community.settings')} panelId="community-panel" />
+      {/* [fork-local] forkHideCommunity=true 时隐藏「设置 › 社区」标签；后端 RPC 保留，需要时把开关改回 false 即可重新展示。 */}
+      {forkHideCommunity ? null : <Tab value="community" label={t('@yovoice.community.settings')} panelId="community-panel" />}
       <Tab value="assets" label={t('@yovoice.nav.assets')} panelId="assets-panel" />
       <Tab value="logs" label={t('@yovoice.settings.tabLogs')} panelId="logs-panel" />
     </TabList>
@@ -138,7 +140,7 @@ export function Settings({ state, catalog, engine, draft, run, focus, active, on
           : <ModelGroups key={shownKind} models={catalog.filter(model => modelTab(model.family) === shownKind)} state={state} draft={draft} run={run} focus={focus?.modelId} />}
       </VStack>
       {shownKind === 'soundfonts' || shownKind === 'default-models' ? null : <HStack className="settings-footnote" gap={3} vAlign="center" wrap="wrap"><small>{t('@yovoice.settings.licenseBlurb')}</small><Button size="sm" label={t('@yovoice.settings.licenseButton')} variant="ghost" onClick={() => run(async () => { const response = await fetch('./model-license.txt'); if (!response.ok) throw new CallError('@yovoice.error.licenseReadFailed'); setLicense(await response.text()); })} /></HStack>}
-    </VStack> : tab === 'hotkeys' ? <HotkeySettings state={state} run={run} active={active} /> : tab === 'ai' ? <AISettings state={state} run={run} focus={focus} /> : tab === 'assistant' ? <AssistantSettings state={state} run={run} /> : tab === 'community' ? <CommunitySettings state={state} run={run} /> : tab === 'assets'
+    </VStack> : tab === 'hotkeys' ? <HotkeySettings state={state} run={run} active={active} /> : tab === 'ai' ? <AISettings state={state} run={run} focus={focus} /> : tab === 'assistant' ? <AssistantSettings state={state} run={run} /> : !forkHideCommunity && tab === 'community' ? <CommunitySettings state={state} run={run} /> : tab === 'assets'
       ? <Suspense fallback={<p role="status">{t('@yovoice.app.loading')}</p>}><AssetsPage state={state} active={active} run={run} onError={onError} openProject={openProject} /></Suspense> : tab === 'logs' ? <LogViewer run={run} /> : <VStack className="settings-panel engine-settings" gap={6} id="engine-panel" role="tabpanel" aria-label={t('@yovoice.settings.tabEngine')}>
       <SettingsGroup title={<>audio.cpp{runtimeVersion ? <small className="model-size">{runtimeVersion}</small> : null}</>}>
         <SettingsRow className="engine-setting-row" label={t('@yovoice.settings.computeDevice')}>

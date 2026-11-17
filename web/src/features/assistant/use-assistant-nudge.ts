@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslator, type TranslatorFn } from '@astryxdesign/core/i18n';
 import type { Activity, Draft, State } from '../../shared/workbench';
+import { forkHideCommunity } from '../../shared/lib/fork-config';
 
 // Ocho 的主动提示：生成完成或失败、模型或引擎下载结束时，在右下角入口上方冒出一个小气泡，
 // 给一句话和一个动作；点动作即打开面板并替用户发出对应的请求。面板开着、关闭了主动提示或助手不可用时不出现。
@@ -23,7 +24,7 @@ export function nudgeFor(t: TranslatorFn, activity: Activity, drafts: Draft[]): 
     if (activity.status !== 'completed') return null;
     const draft = drafts.find(item => item.id === activity.projectId);
     const kind = draft?.kind === 'music' || draft?.kind === 'score' || draft?.kind === 'sfx' ? draft.kind : draft?.subtitles ? 'story' : 'text';
-    if (kind === 'music' && draft) return { id, tone: 'success', text: t('@yovoice.assistant.nudge.share'), action: t('@yovoice.community.share'), prompt: '', share: draft.id };
+    if (kind === 'music' && draft && !forkHideCommunity) return { id, tone: 'success', text: t('@yovoice.assistant.nudge.share'), action: t('@yovoice.community.share'), prompt: '', share: draft.id };
     return { id, tone: 'success', text: t(`@yovoice.assistant.nudge.done.${kind}`), action: t('@yovoice.assistant.nudge.improve'), prompt: t(`@yovoice.assistant.nudge.donePrompt.${kind}`) };
   }
   if (activity.kind === 'download' || activity.kind === 'runtime') {

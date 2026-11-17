@@ -71,6 +71,9 @@
   "@yovoice.activity.synthesizing": {
     "defaultMessage": "Cargando el modelo o sintetizando la voz"
   },
+  "@yovoice.activity.generatingMusic": {
+    "defaultMessage": "Cargando el modelo o generando música"
+  },
   "@yovoice.activity.verifying": {
     "defaultMessage": "Verificando el modelo"
   },

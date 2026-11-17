@@ -76,6 +76,7 @@ func run() error {
 		return e
 	}
 	defer wb.Close()
+	wb.Store.SeedFork() // [fork-local] 首启种子：开箱即用的角色与参考音色（仅服务启动路径触发，不影响单元测试）
 	// 修复悬空引用，避免作品因源音频缺失而永久无法保存。
 	if _, e := wb.Reconcile(); e != nil {
 		diag.Log(root, "state.reconcile_failed", "error", diag.Error(e))

@@ -10,7 +10,7 @@ import (
 )
 
 // dataEntries 是数据目录中由应用创建的条目；清理旧目录时只删除这些，其余内容（用户自行放入的文件）原样保留。
-var dataEntries = []string{"voices", "outputs", "downloads", "runtime", "models", "logs", "service.lock", hostPreferences, backupFile, legacyBackup, legacyMigrated, "local-api.json", "secrets.json", WebCacheDir}
+var dataEntries = []string{"voices", "outputs", "downloads", "runtime", "models", "logs", "seed", "service.lock", hostPreferences, backupFile, legacyBackup, legacyMigrated, "local-api.json", "secrets.json", WebCacheDir, seedMarker}
 
 // dataEntry 判断名称是否为应用创建的条目，包括损坏快照与修复快照。
 func dataEntry(name string) bool {

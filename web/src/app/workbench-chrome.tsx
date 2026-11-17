@@ -41,6 +41,7 @@ import { WorkbenchOverlays, type VoicePickerMode } from './workbench-overlays';
 import { CaptionDialog } from '../features/media/caption-dialog';
 import { VersionExportDialog } from '../features/media/version-export-dialog';
 import { ShareDialog } from '../features/community/share-dialog';
+import { forkHideCommunity } from '../shared/lib/fork-config';
 import { coverJpeg } from '../features/music/song-cover';
 import type { StudioTarget } from '../features/music/stem-studio';
 import { useHotkey, useHotkeyAria, useHotkeyDispatcher, useHotkeyText, withHotkey } from '../shared/hotkeys/hotkeys';
@@ -285,7 +286,8 @@ export function WorkbenchChrome({ state, catalog, catalogRevision, engine, ready
   const playerActions = projectKind(draft) === 'story' ? undefined : <HStack gap={2} vAlign="center">
     {currentVersion ? <AudioCheckBadge check={currentVersion.check} /> : null}
     {/* 歌曲版本的主操作：分享到社区放在播放栏最前面，用主色按钮。 */}
-    {currentVersion && music && !currentVersion.stemOf ? <Button className="player-share" label={t('@yovoice.community.share')} size="sm" variant="primary" icon={<Share2 />} onClick={() => setShareTarget(currentVersion)} /> : null}
+    {/* [fork-local] forkHideCommunity=true 时轻量版隐藏社区入口，保留渲染分支便于回合并。 */}
+    {!forkHideCommunity && currentVersion && music && !currentVersion.stemOf ? <Button className="player-share" label={t('@yovoice.community.share')} size="sm" variant="primary" icon={<Share2 />} onClick={() => setShareTarget(currentVersion)} /> : null}
     {currentVersion ? <Button className="player-tool" label={t('@yovoice.player.reveal')} tooltip={t('@yovoice.player.reveal')} size="sm" icon={<FolderOpen />} onClick={() => { void call('media.reveal', { kind: 'outputs', id: currentVersion.id }).catch(e => onError(noticeMessage(e))); }} /> : null}
     {currentVersion && music ? <Button className="player-tool" label={t('@yovoice.music.nowPlaying')} tooltip={withHotkey(t('@yovoice.music.nowPlaying'), songEditing ? nowPlayingKeys : '')} aria-keyshortcuts={songEditing ? nowPlayingAria : undefined} size="sm" variant="ghost" icon={<Disc3 />} onClick={() => setNowPlaying(currentVersion)} /> : null}
     {/* 历史入口始终保留：还没生成过时也能进入历史页查看其他作品的生成记录。 */}
@@ -360,7 +362,8 @@ export function WorkbenchChrome({ state, catalog, catalogRevision, engine, ready
       </VStack>} /></VStack>
     </VStack></AppShell>
     {ready && !assistantHidden ? <PageBoundary name="assistant"><Suspense fallback={null}><AssistantDock state={state} open={assistantOpen} setOpen={setAssistantOpen} context={{ ...assistantContext, page: assistantContext.page === 'create' ? 'text' : assistantContext.page }} expanded={assistantExpanded} quickActions={quickActions(t, assistantPage === 'create' ? 'text' : assistantPage)} onToggleExpand={() => setAssistantExpanded(expanded => !expanded)} actions={askAssistantPanel} launcherHidden={launcherHidden} showLauncher={showLauncher} nudge={nudge} onNudge={actOnNudge} dismissNudge={dismissNudge} /></Suspense></PageBoundary> : null}
-    {shareTarget ? <PageBoundary name="community-share"><ShareDialog generation={shareTarget} name={shareTarget.settings.title.trim() || versionName(shareTarget)} community={state.community} onClose={() => setShareTarget(null)} /></PageBoundary> : null}
+    {/* [fork-local] forkHideCommunity=true 时不挂载分享弹窗；入口按钮与 Ocho 分享提示都已隐藏，shareTarget 也就无从被赋值。 */}
+    {!forkHideCommunity && shareTarget ? <PageBoundary name="community-share"><ShareDialog generation={shareTarget} name={shareTarget.settings.title.trim() || versionName(shareTarget)} community={state.community} onClose={() => setShareTarget(null)} /></PageBoundary> : null}
     {exportTarget ? <PageBoundary name="version-export"><VersionExportDialog generation={exportTarget} name={versionName(exportTarget)} tags={exportTags(exportTarget)} onClose={() => setExportTarget(null)} /></PageBoundary> : null}
     {studio ? <PageBoundary name="stem-studio"><Suspense fallback={null}><StemStudio target={studio} history={state.history} project={studio.kind === 'midi' ? (studio.projectId === draft.id ? draft : state.drafts.find(item => item.id === studio.projectId)) : undefined}
       onClose={() => setStudio(null)} onExport={exportStems} onResplit={source => separateStems(source, true)} onDeleteStems={deleteStems} busy={busy} openSoundFonts={() => { setStudio(null); openSettings('musescore-general-sf2'); }} /></Suspense></PageBoundary> : null}

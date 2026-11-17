@@ -71,6 +71,9 @@
   "@yovoice.activity.synthesizing": {
     "defaultMessage": "Modell wird geladen oder Sprache synthetisiert"
   },
+  "@yovoice.activity.generatingMusic": {
+    "defaultMessage": "Modell wird geladen oder Musik erstellt"
+  },
   "@yovoice.activity.verifying": {
     "defaultMessage": "Modell wird überprüft"
   },

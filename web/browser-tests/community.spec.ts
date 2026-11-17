@@ -3,6 +3,11 @@ import { seedState } from './seed';
 import { emptyState } from '../src/shared/workbench';
 import { createMusicDraft } from '../src/features/music/music-draft';
 import { lyricRows } from '../src/features/music/lyric-timing';
+import { forkHideCommunity } from '../src/shared/lib/fork-config';
+
+// [fork-local] 轻量改造版默认隐藏分享入口，前端不再渲染任何社区相关按钮/菜单/标签，本文件行为不再适用；
+// 把 forkHideCommunity 改回 false 重新构建即可重新启用以下用例（上游 RPC/后端都保留）。
+test.skip(forkHideCommunity, '[fork-local] 轻量版隐藏分享入口');
 
 test('分享歌曲到社区：先登录，填写后上传，设置里能看到并删除', async ({ page }, testInfo) => {
   const draft = { ...createMusicDraft('zh-CN'), id: 'e'.repeat(32), title: '夜航', text: 'Mandarin, folk, mandarin, dreamy bamboo flute countermelody over soft rain' };

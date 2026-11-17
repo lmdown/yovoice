@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { seedState } from './seed';
 import { emptyState } from '../src/shared/workbench';
 import { createMusicDraft } from '../src/features/music/music-draft';
+import { forkHideCommunity } from '../src/shared/lib/fork-config';
 
 // Ocho 融入应用：选中内容随消息带上、写操作走确认卡片、偏好记忆在设置里可查看与删除、生成结束时主动提示。
 // 验收截图：设置 YOVOICE_SHOTS 目录时才保存，默认不落盘。
@@ -136,6 +137,9 @@ test('生成结束时 Ocho 主动提示：失败可一键诊断，关闭主动�
   await expect(nudge).toHaveCount(0);
 });
 
+// [fork-local] 轻量版默认隐藏分享入口，Ocho 完成后不再发邀请分享的气泡；恢复上游行为时把 forkHideCommunity 改回 false。
+test.describe('Ocho 分享邀请', () => {
+  test.skip(forkHideCommunity, '[fork-local] 轻量版隐藏分享入口');
 test('歌曲生成好时 Ocho 邀请分享到社区，点按钮直接打开分享弹窗', async ({ page }) => {
   const state = emptyState();
   const draft = { ...createMusicDraft('zh-CN'), id: 'f'.repeat(32), title: '夏夜' };
@@ -158,4 +162,5 @@ test('歌曲生成好时 Ocho 邀请分享到社区，点按钮直接打开分�
   await expect(page.getByRole('dialog', { name: '分享到社区' })).toBeVisible();
   // 分享不经过对话，面板保持关闭。
   await expect(page.getByTestId('assistant-panel')).toHaveCount(0);
+});
 });

@@ -71,6 +71,9 @@
   "@yovoice.activity.synthesizing": {
     "defaultMessage": "Загрузка модели или синтез речи"
   },
+  "@yovoice.activity.generatingMusic": {
+    "defaultMessage": "Загрузка модели или генерация музыки"
+  },
   "@yovoice.activity.verifying": {
     "defaultMessage": "Проверка модели"
   },

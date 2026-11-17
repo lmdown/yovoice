@@ -71,6 +71,9 @@
   "@yovoice.activity.synthesizing": {
     "defaultMessage": "Đang tải mô hình hoặc tổng hợp giọng nói"
   },
+  "@yovoice.activity.generatingMusic": {
+    "defaultMessage": "Đang tải mô hình hoặc tạo nhạc"
+  },
   "@yovoice.activity.verifying": {
     "defaultMessage": "Đang xác minh mô hình"
   },

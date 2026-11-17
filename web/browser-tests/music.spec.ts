@@ -3,6 +3,7 @@ import { seedState } from './seed';
 import { emptyState } from '../src/shared/workbench';
 import { createMusicDraft } from '../src/features/music/music-draft';
 import { songLyrics, syntheticSong, wavBytes } from './synthetic-song';
+import { forkHideCommunity } from '../src/shared/lib/fork-config';
 
 test('新建音乐作品：示例、风格标签、段落标记、纯音乐与参数持久化', async ({ page }, testInfo) => {
   await page.goto('/');
@@ -276,7 +277,8 @@ test('音乐历史版本：工具栏进入历史页，播放页、复用和删�
   const transport = page.locator('.player .transport');
   await expect(transport.getByRole('button', { name: '打开位置', exact: true })).toBeVisible();
   // 分享到社区是播放栏上的主按钮，不再收在菜单里。
-  await expect(transport.getByRole('button', { name: '分享到社区', exact: true })).toBeVisible();
+  // [fork-local] 轻量版默认隐藏分享入口，播放栏上不再出现分享按钮；恢复上游时把 forkHideCommunity 改回 false。
+  await expect(transport.getByRole('button', { name: '分享到社区', exact: true })).toHaveCount(forkHideCommunity ? 0 : 1);
   await transport.getByRole('button', { name: '音频操作', exact: true }).click();
   // 菜单项右侧可能带快捷键徽标（⌘E、⇧⌘S），只比对名称开头。
   await expect(page.getByRole('menuitem')).toHaveText([/^导出音频/, /^分离音轨/, /^转为 MIDI/]);
@@ -315,7 +317,10 @@ test('音乐历史版本：工具栏进入历史页，播放页、复用和删�
 
   // 复用这一版：风格和歌词写回当前作品，回到创作页。
   await rows.nth(1).getByRole('button', { name: '音频操作', exact: true }).click();
-  await expect(page.getByRole('menuitem')).toHaveText(['导出音频', '分享到社区', '分离音轨', '转为 MIDI', '复用这一版的风格和歌词']);
+  await expect(page.getByRole('menuitem')).toHaveText(forkHideCommunity
+    // [fork-local] 轻量版隐藏分享菜单项。
+    ? ['导出音频', '分离音轨', '转为 MIDI', '复用这一版的风格和歌词']
+    : ['导出音频', '分享到社区', '分离音轨', '转为 MIDI', '复用这一版的风格和歌词']);
   await page.getByRole('menuitem', { name: '复用这一版的风格和歌词', exact: true }).click();
   await expect(page.getByLabel('风格', { exact: true })).toHaveValue('style v2');
   await expect(page.getByLabel('歌词', { exact: true })).toHaveValue(/第二版的第一句/);

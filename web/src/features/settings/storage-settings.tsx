@@ -12,6 +12,7 @@ import { formatBytes, type CleanupReport, type StorageInfo, type State } from '.
 import { overflowTitle } from '../../shared/ui/overflow-title';
 import { AppDialog } from '../../shared/ui/app-dialog';
 import { SettingsGroup, SettingsRow } from '../../shared/ui/settings-group';
+import { forkUsesAppDataDir } from '../../shared/lib/fork-config';
 
 // 设置 › 常规里的“存储”：数据目录路径、各类占用明细、更改存储位置、打开目录和清理残留。
 export function StorageSettings({ state, run, busy }: { state: State; run: (task: () => Promise<unknown>) => void; busy?: boolean }) {
@@ -98,14 +99,15 @@ export function StorageSettings({ state, run, busy }: { state: State; run: (task
         </HStack> : null}
       </VStack>}
     >
-      <Button
+      {/* [fork-local] forkUsesAppDataDir=true 时数据目录由 WORKBENCH_DATA 固定，relocate 写了不生效，隐藏「更改位置」入口；路径展示/打开目录/清理残留保留。 */}
+      {forkUsesAppDataDir ? null : <Button
         size="sm"
         label={t('@yovoice.settings.changeLocation')}
         icon={<FolderCog size={16} />}
         isDisabled={busy || relocating || !!info.pendingPath}
         isLoading={relocating}
         onClick={changeLocation}
-      />
+      />}
       <Button
         size="sm"
         label={t('@yovoice.settings.openFolder')}

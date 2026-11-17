@@ -41,7 +41,23 @@ if [[ "$actual" != "$digest" ]]; then echo 'audio.cpp 校验失败，请删除�
 # 仅携带推理服务、模型描述和许可证，不打包 Python 工具或模型权重。
 tar -xzf "$archive" -C "$app/Contents/Resources/engine" ./audiocpp_server ./model_specs ./LICENSE
 chmod +x "$app/Contents/Resources/engine/audiocpp_server"
-python3 scripts/build-ffmpeg.py "$app/Contents/Resources/tools"
+# [fork-local] 调试提速：YOVOICE_SYSTEM_FFMPEG=1 时复用 PATH 上的现成 ffmpeg/ffprobe，跳过源码下载与本地编译。
+# 默认（不设该变量）行为与上游一致：仍走源码构建的精简静态 FFmpeg（许可证/可复现/自包含）。
+if [[ -n "${YOVOICE_SYSTEM_FFMPEG:-}" ]]; then
+  mkdir -p "$app/Contents/Resources/tools"
+  for _t in ffmpeg ffprobe; do
+    _bin="$(command -v "$_t" || true)"
+    [[ -n "$_bin" ]] || { echo "YOVOICE_SYSTEM_FFMPEG=1 但 PATH 里找不到 $_t" >&2; exit 1; }
+    # 先试复制（保证 .app 自包含）；若被 macOS TCC 拒绝（常见于 ~/Documents 下的二进制），退回软链接（仅本机调试）。
+    if ! cp -f "$_bin" "$app/Contents/Resources/tools/$_t" 2>/dev/null; then
+      ln -sf "$_bin" "$app/Contents/Resources/tools/$_t"
+      echo "[fork-local] ${_t} 复制被拒 (多为 TCC 保护), 改用软链接 -> ${_bin} (仅本机调试, 不可移植)" >&2
+    fi
+  done
+  echo "[fork-local] 已复用系统 ffmpeg：$(command -v ffmpeg)（仅调试；正式打包请走源码构建以满足精简/LGPL/附源码）"
+else
+  python3 scripts/build-ffmpeg.py "$app/Contents/Resources/tools"
+fi
 python3 scripts/package-ocho.py "$app/Contents/Resources/tools/ocho"
 cp LICENSE THIRD_PARTY_NOTICES.md "$app/Contents/Resources/"
 cat > "$app/Contents/Info.plist" <<'PLIST'
