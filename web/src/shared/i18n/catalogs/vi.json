@@ -4148,6 +4148,12 @@
   "@yovoice.settings.updateNotice": {
     "defaultMessage": "{count} mô hình có bản mới"
   },
+  "@yovoice.settings.modelMemory": {
+    "defaultMessage": "≥ {gb} GB RAM/VRAM"
+  },
+  "@yovoice.settings.modelMemoryHint": {
+    "defaultMessage": "Ước tính từ dung lượng tệp cộng khoảng 1 GB chi phí chạy. Nhu cầu thực phụ thuộc vào độ dài và backend."
+  },
   "@yovoice.settings.modelUpdateAvailable": {
     "defaultMessage": "Có phiên bản mới"
   },

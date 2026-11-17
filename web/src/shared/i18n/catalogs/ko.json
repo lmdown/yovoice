@@ -4148,6 +4148,12 @@
   "@yovoice.settings.updateNotice": {
     "defaultMessage": "모델 업데이트 {count}개"
   },
+  "@yovoice.settings.modelMemory": {
+    "defaultMessage": "RAM/VRAM ≥ {gb} GB"
+  },
+  "@yovoice.settings.modelMemoryHint": {
+    "defaultMessage": "파일 크기에 실행 오버헤드 약 1GB를 더해서 추정했습니다. 실제 필요량은 길이와 백엔드에 따라 달라집니다."
+  },
   "@yovoice.settings.modelUpdateAvailable": {
     "defaultMessage": "새 버전"
   },

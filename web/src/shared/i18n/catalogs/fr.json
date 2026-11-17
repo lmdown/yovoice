@@ -4148,6 +4148,12 @@
   "@yovoice.settings.updateNotice": {
     "defaultMessage": "{count} modèles à mettre à jour"
   },
+  "@yovoice.settings.modelMemory": {
+    "defaultMessage": "≥ {gb} Go de RAM/VRAM"
+  },
+  "@yovoice.settings.modelMemoryHint": {
+    "defaultMessage": "Estimé à partir de la taille du fichier plus environ 1 Go de surcharge d'exécution. Le besoin réel dépend de la durée et du moteur."
+  },
   "@yovoice.settings.modelUpdateAvailable": {
     "defaultMessage": "Nouvelle version"
   },

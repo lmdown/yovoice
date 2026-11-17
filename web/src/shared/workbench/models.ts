@@ -65,3 +65,13 @@ export const isXTTSModel = (id: string) => id.startsWith('xtts-v2-');
 export const isGradiumModel = (id: string) => id.startsWith('gradium-phonon-');
 export const isDramaModel = (id: string) => id.startsWith('fish-drama3-');
 export const requiresVoice = (draft: Draft) => isKokoroModel(draft.modelId) || isVoxtralModel(draft.modelId) || isGradiumModel(draft.modelId) || !isVoiceModel(draft.modelId) ? false : draft.modelId.startsWith('qwen3-tts-') ? !/customvoice|voicedesign/.test(draft.modelId) : draft.modelId.startsWith('omnivoice-') || isBreezeModel(draft.modelId) || isMingModel(draft.modelId) || isPlapreModel(draft.modelId) || isDramaModel(draft.modelId) ? draft.voiceMode === 'clone' : !isVoxModel(draft.modelId) || ['clone', 'continuation'].includes(draft.voxMode ?? 'design');
+
+// [fork-local] P1-4 下载前硬件提示：GGUF 运行时峰值 ≈ 文件大小 + 运行开销（激活、声码器、KV 缓存），向上取到市场档位。
+// 与 Modang「显存推荐基于实测档位」约定一致：语音模型实测≈文件 + 0.5~1 GB；音乐（yue2/ace_step）长序列生成
+// KV/激活开销更大（yue2-3b q4 实测约 5 GB、q8 约 6 GB），故取 + 2 GB。Apple 统一内存即占用量；离散 N 卡的 CUDA
+// context 余量并入档位。仅供下载前参考，非硬性保证。音色库（sf2）是采样库、不占显存，故调用方不传入。
+const vramTiers = [4, 6, 8, 12, 16, 24, 32];
+export const recommendedVramGB = (sizeBytes: number, modelId: string): number => {
+  const estimate = sizeBytes / 1024 ** 3 + (isMusicModel(modelId) ? 2 : 1);
+  return vramTiers.find(tier => tier >= estimate) ?? vramTiers[vramTiers.length - 1];
+};

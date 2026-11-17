@@ -9,7 +9,7 @@ import { Token } from '@astryxdesign/core/Token';
 import { useTranslator } from '@astryxdesign/core/i18n';
 import { CircleCheck, FolderOpen, Download, Pause, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { call } from '../../shared/lib/client';
-import { formatBytes, groupModels, modelMainFile, modelUpdateAvailable, modelVersionDigest, type Draft, type ModelPackage, type State } from '../../shared/workbench';
+import { formatBytes, groupModels, isSoundFont, modelMainFile, modelUpdateAvailable, modelVersionDigest, recommendedVramGB, type Draft, type ModelPackage, type State } from '../../shared/workbench';
 import { formatDateTime } from '../../shared/i18n/format';
 import { Selector } from '../../shared/selector';
 import { SettingsGroup } from '../../shared/ui/settings-group';
@@ -102,6 +102,8 @@ export function ModelGroups({ models, state, draft, run, focus }: { models: Mode
             <p className="settings-row-title">{model.name}</p>
             {group.length === 1 ? <small className="precision">{model.precision}</small> : null}
             <small className="model-size">{formatBytes(model.size)}</small>
+            {/* [fork-local] P1-4：下载前给出建议内存/显存档位（按文件体积估算），音色库不展示。 */}
+            {!isSoundFont(model.id) ? <small className="model-vram" title={t('@yovoice.settings.modelMemoryHint')}>{t('@yovoice.settings.modelMemory', { gb: recommendedVramGB(model.size, model.id) })}</small> : null}
             {update ? <Token size="sm" color="gray" label={t('@yovoice.settings.modelUpdateAvailable')} /> : null}
             {ready && !update ? <small className="ready">{inUse ? t('@yovoice.settings.inUse') : t('@yovoice.settings.verified')}</small> : null}
           </HStack>

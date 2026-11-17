@@ -4148,6 +4148,12 @@
   "@yovoice.settings.updateNotice": {
     "defaultMessage": "Обновления моделей: {count}"
   },
+  "@yovoice.settings.modelMemory": {
+    "defaultMessage": "≥ {gb} ГБ ОЗУ/VRAM"
+  },
+  "@yovoice.settings.modelMemoryHint": {
+    "defaultMessage": "Оценка по размеру файла плюс примерно 1 ГБ накладных расходов при выполнении. Фактическая потребность зависит от длительности и бэкенда."
+  },
   "@yovoice.settings.modelUpdateAvailable": {
     "defaultMessage": "Новая версия"
   },

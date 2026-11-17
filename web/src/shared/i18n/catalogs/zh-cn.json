@@ -4148,6 +4148,12 @@
   "@yovoice.settings.updateNotice": {
     "defaultMessage": "{count} 个模型可更新"
   },
+  "@yovoice.settings.modelMemory": {
+    "defaultMessage": "需约 {gb} GB 内存/显存"
+  },
+  "@yovoice.settings.modelMemoryHint": {
+    "defaultMessage": "按文件大小再加约 1 GB 运行时开销估算，实际需求随音频长度和后端变化。"
+  },
   "@yovoice.settings.modelUpdateAvailable": {
     "defaultMessage": "有新版本"
   },

@@ -344,8 +344,12 @@
     .now-playing-mote { opacity: var(--mote-peak); }
     .now-playing-line { transition-delay: 0s; }
   }
-  @keyframes now-playing-in { from { opacity: 0; transform: translateY(4%) scale(.985); } }
-  @keyframes now-playing-out { to { opacity: 0; transform: translateY(6%) scale(.985); } }
+  /* [fork-local] P1-5：播放器打开/收起的过渡。原入场只缩放 .985（近乎无位移），全屏瞬间铺满、看着生硬。
+     改成从更小、略靠下的位置放大到全屏（.9→1），收起时向内轻收（1→.94），形成清晰的“展开/收拢”空间感。
+     复用现成机制：时长仍取 --duration-slow（进）/--duration-medium（出），且已在下方 prefers-reduced-motion 里统一 animation:none 降级，
+     不改开关/关窗逻辑（收起动画结束再由 use-immersive-chrome 关闭），也不走视图过渡以免与本组件自带的入场动画叠出重影。 */
+  @keyframes now-playing-in { from { opacity: 0; transform: translateY(2%) scale(.9); } }
+  @keyframes now-playing-out { to { opacity: 0; transform: translateY(3%) scale(.94); } }
   @keyframes now-playing-drift { from { transform: translate(0, 0) scale(1) rotate(0); } to { transform: translate(12vmax, 8vmax) scale(1.15) rotate(25deg); } }
   @keyframes now-playing-pop { from { opacity: 0; transform: translateY(var(--spacing-3)) scale(.98); } }
   @keyframes now-playing-breathe { 50% { opacity: .55; } }
