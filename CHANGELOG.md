@@ -10,12 +10,14 @@
 - Reference audio supports drag and drop and selecting generated speech from history, with audition, excerpt selection and an editable transcript. Saved references retain their source and remain usable after the original generation is deleted.
 - Qwen3 CustomVoice now labels its optional delivery instructions as style guidance and explains how they work with the built-in speaker.
 - Generation history shows model tags and a read-only configuration view with the saved text, time, seed and parameters, plus JSON export. The same view is available while selecting historical speech as a reference.
+- Settings › Models lists additional self-quantized tiers (IndexTTS 2 and 2.5 in Q3/Q4, Qwen3-TTS in Q3/Q4, YuE2 3B in Q3) downloaded from ModelScope. They are merged from a separate add-on manifest, so the bundled model catalog stays untouched.
 
 ### 简体中文
 - 修复音频丢失：语音生成不再达到十次后自动删除较早版本及原音频；接口历史和已完成的故事逐句版本也不会在生成、启动或清理残留时自动删除，保留到用户明确删除。
 - 参考音频支持拖入文件，以及从生成历史选择语音、试听、截取节选并编辑原文；保存的样本保留来源，删除原生成记录后仍可使用。
 - Qwen3 CustomVoice 将可选的演绎指令标为“风格指导”，说明其与内置音色的关系。
 - 生成历史新增模型标签和只读的生成配置详情，可查看保存的文字、时间、随机种子与参数并导出 JSON；选择历史语音作为参考时也可查看。
+- 设置 › 模型新增更多自量化档（IndexTTS 2 与 2.5 的 Q3/Q4、Qwen3-TTS 的 Q3/Q4、YuE2 3B 的 Q3），从 ModelScope 下载。它们由一份独立的附加清单并入，不改动内置的模型目录。
 
 ## [0.8.0] - 2026-11-15
 

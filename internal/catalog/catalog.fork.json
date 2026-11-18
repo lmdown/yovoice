@@ -1,0 +1,182 @@
+{
+  "models": [
+    {
+      "id": "index-2-q3",
+      "name": "IndexTTS 2.0",
+      "family": "index_tts2",
+      "version": "2",
+      "precision": "Q3",
+      "repo": "rookie6667/IndexTTS2-GGUF-demo",
+      "modelScope": "rookie6667/IndexTTS2-GGUF-demo",
+      "remotePath": "index-tts2-q3_k.gguf",
+      "size": 2691787008,
+      "sha256": "592f8db1332b0f2fd98d58efa95341fe1d9f063423f6ed805ccb8c182ce7ec20"
+    },
+    {
+      "id": "index-2-q4",
+      "name": "IndexTTS 2.0",
+      "family": "index_tts2",
+      "version": "2",
+      "precision": "Q4",
+      "repo": "rookie6667/IndexTTS2-GGUF-demo",
+      "modelScope": "rookie6667/IndexTTS2-GGUF-demo",
+      "remotePath": "index-tts2-q4_k.gguf",
+      "size": 2902089184,
+      "sha256": "dd10ddf24c70bea2538af0014c4fe59df69c197bd27c15c38f988a053fbe9d6a"
+    },
+    {
+      "id": "index-2.5-q3",
+      "name": "IndexTTS 2.5",
+      "family": "index_tts2",
+      "version": "2.5",
+      "precision": "Q3",
+      "repo": "rookie6667/IndexTTS2.5-GGUF",
+      "modelScope": "rookie6667/IndexTTS2.5-GGUF",
+      "remotePath": "index-tts2_5-q3_k.gguf",
+      "size": 2544478880,
+      "sha256": "3c7ed32d095226188cc3393875b756d15295a4e0f59108cde091a87019f15e18"
+    },
+    {
+      "id": "index-2.5-q4",
+      "name": "IndexTTS 2.5",
+      "family": "index_tts2",
+      "version": "2.5",
+      "precision": "Q4",
+      "repo": "rookie6667/IndexTTS2.5-GGUF",
+      "modelScope": "rookie6667/IndexTTS2.5-GGUF",
+      "remotePath": "index-tts2_5-q4_k.gguf",
+      "size": 2758368192,
+      "sha256": "641ae8bee3c3a571c13c532b4881edf6ae87996d31694025042ad2ccf6ee956a"
+    },
+    {
+      "id": "qwen3-tts-customvoice-q4",
+      "name": "Qwen3-TTS 1.7B CustomVoice",
+      "family": "qwen3_tts",
+      "version": "1.7B",
+      "variant": "customvoice",
+      "task": "tts",
+      "precision": "Q4",
+      "repo": "rookie6667/Qwen3-TTS-GGUF",
+      "modelScope": "rookie6667/Qwen3-TTS-GGUF",
+      "remotePath": "Qwen3-TTS-12Hz-1.7B-CustomVoice-GGUF/qwen3-tts-12hz-1.7b-customvoice-q4_k.gguf",
+      "size": 1866914400,
+      "sha256": "d4af3533ce10844861b2d70736d64a70eba6954f273774932beb0bb5811ea20a"
+    },
+    {
+      "id": "qwen3-tts-voicedesign-q4",
+      "name": "Qwen3-TTS 1.7B VoiceDesign",
+      "family": "qwen3_tts",
+      "version": "1.7B",
+      "variant": "voicedesign",
+      "task": "vdes",
+      "precision": "Q4",
+      "repo": "rookie6667/Qwen3-TTS-GGUF",
+      "modelScope": "rookie6667/Qwen3-TTS-GGUF",
+      "remotePath": "Qwen3-TTS-12Hz-1.7B-VoiceDesign-GGUF/qwen3-tts-12hz-1.7b-voicedesign-q4_k.gguf",
+      "size": 1866859264,
+      "sha256": "4cc5095b40f38f14ceeedea22aa8f225c191575c000c17219602a274e373ba5e"
+    },
+    {
+      "id": "qwen3-tts-base-0.6b-q3",
+      "name": "Qwen3-TTS 0.6B Base",
+      "family": "qwen3_tts",
+      "version": "0.6B",
+      "variant": "base",
+      "task": "tts",
+      "precision": "Q3",
+      "repo": "rookie6667/Qwen3-TTS-GGUF",
+      "modelScope": "rookie6667/Qwen3-TTS-GGUF",
+      "remotePath": "Qwen3-TTS-12Hz-0.6B-Base-GGUF/qwen3-tts-12hz-0.6b-base-q3_k.gguf",
+      "size": 1328034432,
+      "sha256": "4b0c5a859568aebef11bf34ef5d2280620583a8743e2c0981a07ae9d13da8876"
+    },
+    {
+      "id": "qwen3-tts-base-0.6b-q4",
+      "name": "Qwen3-TTS 0.6B Base",
+      "family": "qwen3_tts",
+      "version": "0.6B",
+      "variant": "base",
+      "task": "tts",
+      "precision": "Q4",
+      "repo": "rookie6667/Qwen3-TTS-GGUF",
+      "modelScope": "rookie6667/Qwen3-TTS-GGUF",
+      "remotePath": "Qwen3-TTS-12Hz-0.6B-Base-GGUF/qwen3-tts-12hz-0.6b-base-q4_k.gguf",
+      "size": 1412010624,
+      "sha256": "bc9e5021446453e99730b0d0ad203dc2fdfbf2196407e4ec19434a283741d3df"
+    },
+    {
+      "id": "qwen3-tts-base-q4",
+      "name": "Qwen3-TTS 1.7B Base",
+      "family": "qwen3_tts",
+      "version": "1.7B",
+      "variant": "base",
+      "task": "tts",
+      "precision": "Q4",
+      "repo": "rookie6667/Qwen3-TTS-GGUF",
+      "modelScope": "rookie6667/Qwen3-TTS-GGUF",
+      "remotePath": "Qwen3-TTS-12Hz-1.7B-Base-GGUF/qwen3-tts-12hz-1.7b-base-q4_k.gguf",
+      "size": 2036811584,
+      "sha256": "22cd2622a3ca9edc051e4b1fd87c084615a8df301bc71cc8d5a8910a96f45d47"
+    },
+    {
+      "id": "yue2-3b-q3",
+      "name": "YuE2 3B",
+      "family": "yue2",
+      "task": "gen",
+      "engineMinimum": "v0.9.1",
+      "version": "2",
+      "precision": "Q3",
+      "repo": "rookie6667/Yue2-3B-GGUF",
+      "modelScope": "rookie6667/Yue2-3B-GGUF",
+      "directory": "Yue2-3B-GGUF",
+      "sessionOptions": {
+        "yue2.model_gguf": "yue2-3b-q3_k.gguf"
+      },
+      "remotePath": "yue2-3b-q3_k.gguf",
+      "size": 2715755829,
+      "sha256": "23d573fc3b69fda862e779f7bb90ed22af940e02ae99c0ecf435a0860cbab644",
+      "files": [
+        {
+          "path": "yue2-3b-q3_k.gguf",
+          "size": 2447973152,
+          "sha256": "23d573fc3b69fda862e779f7bb90ed22af940e02ae99c0ecf435a0860cbab644"
+        },
+        {
+          "path": "sidecars/yue2-model-config.json",
+          "repo": "audio-cpp/Yue2-3B-GGUF",
+          "revision": "cca74d8980c00f30ab8d52248a367c01ad633ec2",
+          "size": 959,
+          "sha256": "ad3477bbef890bf98ae196c1e4b44779494a6231c4ab66f32708eabadf265329"
+        },
+        {
+          "path": "sidecars/yue2-generation-config.json",
+          "repo": "audio-cpp/Yue2-3B-GGUF",
+          "revision": "cca74d8980c00f30ab8d52248a367c01ad633ec2",
+          "size": 466,
+          "sha256": "203830cebde6e3644eb291925362990d198e66c3b6006cd11f1aaa21904bcc61"
+        },
+        {
+          "path": "sidecars/yue2-qwen.tiktoken",
+          "repo": "audio-cpp/Yue2-3B-GGUF",
+          "revision": "cca74d8980c00f30ab8d52248a367c01ad633ec2",
+          "size": 2561218,
+          "sha256": "b2b1b8dfb5cc5f024bafc373121c6aba3f66f9a5a0269e243470a1de16a33186"
+        },
+        {
+          "path": "sidecars/yue2-vae-config.json",
+          "repo": "audio-cpp/Yue2-3B-GGUF",
+          "revision": "cca74d8980c00f30ab8d52248a367c01ad633ec2",
+          "size": 1378,
+          "sha256": "f0191bb9694009956de44e0c361a6f1334760be4c8f848e599bde24a54a0970"
+        },
+        {
+          "path": "yue2-vae-f16.gguf",
+          "repo": "audio-cpp/Yue2-3B-GGUF",
+          "revision": "cca74d8980c00f30ab8d52248a367c01ad633ec2",
+          "size": 265218656,
+          "sha256": "d4f4a05d8f291ae820cd1e43609da3fa91b56465810091a2b08c3350b751719d"
+        }
+      ]
+    }
+  ]
+}

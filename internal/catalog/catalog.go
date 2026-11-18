@@ -135,6 +135,12 @@ var LegacyModelFiles = map[string]ModelFile{
 var catalogJSON []byte
 var Models = []ModelPackage{}
 
+// [fork-local] catalog.fork.json 是与 catalog.json 分开的附加模型清单：只追加同家族的自量化档
+// （rookie6667 的 ModelScope 仓库），不改项目原有的 catalog.json，便于上游更新时直接覆盖后者。
+//
+//go:embed catalog.fork.json
+var catalogForkJSON []byte
+
 // engine.json 是 audio.cpp 版本与运行包校验值的唯一来源，桌面打包脚本也读取它。
 //
 //go:embed engine.json
@@ -184,6 +190,25 @@ func init() {
 		panic("catalog.json 缺少默认 revision")
 	}
 	Revision, Models = file.Revision, file.Models
+	// [fork-local] 并入附加清单：按 id 去重（原有条目优先），追加进同一份 Models，
+	// 界面 state.models 与下载逻辑都读这份，自量化档因此可直接在页面展示并下载。
+	var forkFile struct {
+		Models []ModelPackage `json:"models"`
+	}
+	if e := json.Unmarshal(catalogForkJSON, &forkFile); e != nil {
+		panic(e)
+	}
+	if len(forkFile.Models) > 0 {
+		seen := make(map[string]bool, len(Models))
+		for _, m := range Models {
+			seen[m.ID] = true
+		}
+		for _, m := range forkFile.Models {
+			if !seen[m.ID] {
+				Models = append(Models, m)
+			}
+		}
+	}
 	var engine struct {
 		Version  string            `json:"version"`
 		Minimum  string            `json:"minimum"`
