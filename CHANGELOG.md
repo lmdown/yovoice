@@ -11,6 +11,8 @@
 - Qwen3 CustomVoice now labels its optional delivery instructions as style guidance and explains how they work with the built-in speaker.
 - Generation history shows model tags and a read-only configuration view with the saved text, time, seed and parameters, plus JSON export. The same view is available while selecting historical speech as a reference.
 - Settings › Models lists additional self-quantized tiers (IndexTTS 2 and 2.5 in Q3/Q4, Qwen3-TTS in Q3/Q4, YuE2 3B in Q3) downloaded from ModelScope. They are merged from a separate add-on manifest, so the bundled model catalog stays untouched.
+- Double-clicking the macOS title bar now zooms the window (maximize/restore), matching Windows, instead of following the system double-click preference.
+- Model downloads now run through the official ModelScope and Hugging Face tools from a bundled Python environment when one is installed, showing live progress in the app; without that environment they fall back to the built-in downloader. Pinned SHA-256 checks are now advisory: a mismatch (for example after a self-quantized tier is re-uploaded under the same file name) is logged but no longer blocks the download, and the file size follows the server. Pausing and resuming an SDK download now keeps its progress and continues from where it stopped instead of the bar dropping to zero and restarting from scratch; an interrupted download also restores its real progress from the partial files on disk after a restart, and the download log records the target directory.
 
 ### 简体中文
 - 修复音频丢失：语音生成不再达到十次后自动删除较早版本及原音频；接口历史和已完成的故事逐句版本也不会在生成、启动或清理残留时自动删除，保留到用户明确删除。
@@ -18,6 +20,8 @@
 - Qwen3 CustomVoice 将可选的演绎指令标为“风格指导”，说明其与内置音色的关系。
 - 生成历史新增模型标签和只读的生成配置详情，可查看保存的文字、时间、随机种子与参数并导出 JSON；选择历史语音作为参考时也可查看。
 - 设置 › 模型新增更多自量化档（IndexTTS 2 与 2.5 的 Q3/Q4、Qwen3-TTS 的 Q3/Q4、YuE2 3B 的 Q3），从 ModelScope 下载。它们由一份独立的附加清单并入，不改动内置的模型目录。
+- macOS 双击标题栏现在会缩放窗口（最大化/还原），与 Windows 一致，不再跟随系统的双击偏好。
+- 装了随附的 Python 环境时，模型下载改用官方 ModelScope / Hugging Face 工具，界面里能看到实时进度；没有该环境时自动回退到内建下载器。钉死的 SHA-256 校验改为仅参考：不一致时（例如自量化档用同名文件重新上传后）只记一条日志，不再阻止下载，文件大小也以服务器实际为准。SDK 下载暂停时进度条会保持当前位置、点“继续”从断点续传，不再归零重下；下载被打断后重启也会按磁盘上已有的分片恢复真实进度（不再一进模型页就显示 0）；下载日志里也会记录目标目录。
 
 ## [0.8.0] - 2026-11-15
 

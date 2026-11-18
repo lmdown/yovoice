@@ -49,6 +49,8 @@ type Workbench struct {
 	community       communityState
 	assistant       *assistant.Manager
 	pendingDataPath string
+	// [fork-local] sdk 缓存 venv/Python SDK 下载路径的可用性探测（进程内只探一次），见 sdk_python.go。
+	sdk sdkProbe
 }
 
 func New(root string) (*Workbench, error) {
@@ -65,6 +67,8 @@ func New(root string) (*Workbench, error) {
 		return download.Proxy(req, preferences.ProxyURL)
 	}
 	w := &Workbench{Store: s, engine: engine.New(root), client: &http.Client{Transport: transport}, bundled: map[string]bundledRuntime{}}
+	// [fork-local] sha256 改为参考校验后，把降级（校验不符但仍落盘）记到服务日志，接上带数据目录的 diag.Log。
+	download.SetAdvisoryLogger(func(event string, fields ...any) { diag.Log(root, event, fields...) })
 	w.assistant = assistant.New(root, assistant.Options{Tools: assistantTools, NewServer: w.newAssistantServer})
 	w.engine.Configure(s.Read().Preferences.Engine)
 	// 先找回已解压的内核再清理，避免把仍可使用的 GPU 内核当作残留删除。
@@ -81,6 +85,8 @@ func New(root string) (*Workbench, error) {
 		return nil, e
 	}
 	w.removeStale()
+	// [fork-local] 未完成下载的进度只在暂停/失败时落库；启动时按磁盘分片字节补齐，避免强杀重启后进度显示 0。
+	w.reconcilePendingDownloads()
 	w.restoreCommunity()
 	return w, nil
 }

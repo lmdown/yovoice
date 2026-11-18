@@ -259,10 +259,13 @@ func TestFileStallReturnsIncomplete(t *testing.T) {
 	}
 }
 
-// 哈希不符不重试，并删除 .part 与 .meta。
-func TestFileChecksumMismatchNoRetry(t *testing.T) {
+// [fork-local] sha256 改为参考校验：钉了非空值但不符时不报错、不重试，仍落盘，并记一条降级日志。
+func TestFileChecksumMismatchIsAdvisory(t *testing.T) {
 	quick(t, time.Second)
 	var hits atomic.Int32
+	var logged atomic.Int32
+	SetAdvisoryLogger(func(string, ...any) { logged.Add(1) })
+	t.Cleanup(func() { SetAdvisoryLogger(nil) })
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hits.Add(1)
 		w.Header().Set("ETag", `"v1"`)
@@ -270,15 +273,64 @@ func TestFileChecksumMismatchNoRetry(t *testing.T) {
 	}))
 	defer server.Close()
 	dest := filepath.Join(t.TempDir(), "file")
-	e := File(context.Background(), server.Client(), server.URL, dest, digest([]byte("other")), 0, noProgress)
-	if codeOf(e) != msg.ErrDownloadChecksum {
-		t.Fatal("应报校验不符", e)
+	if e := File(context.Background(), server.Client(), server.URL, dest, digest([]byte("other")), 0, noProgress); e != nil {
+		t.Fatal("sha256 只作参考，不符不应阻断下载", e)
 	}
 	if hits.Load() != 1 {
-		t.Fatal("校验不符不应重试", hits.Load())
+		t.Fatal("参考校验不应触发重试", hits.Load())
 	}
-	if exists(dest+".part") || exists(dest+".part.meta") || exists(dest) {
-		t.Fatal("校验不符应删除 .part 与 .meta")
+	if !exists(dest) || exists(dest+".part") {
+		t.Fatal("校验不符也应把文件落到 dest 并清理 .part")
+	}
+	if logged.Load() != 1 {
+		t.Fatal("应记一条降级日志", logged.Load())
+	}
+}
+
+// [fork-local] size 改为参考校验：钉死值与服务器实际大小不符时不阻断，以服务器大小落盘并记一条降级日志。
+func TestFileSizeMismatchIsAdvisory(t *testing.T) {
+	quick(t, time.Second)
+	var logged atomic.Int32
+	SetAdvisoryLogger(func(string, ...any) { logged.Add(1) })
+	t.Cleanup(func() { SetAdvisoryLogger(nil) })
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer server.Close()
+	dest := filepath.Join(t.TempDir(), "file")
+	// 钉一个与实际不符的大小（999）但哈希置空，验证失败只来自大小判断。
+	if e := File(context.Background(), server.Client(), server.URL, dest, "", 999, noProgress); e != nil {
+		t.Fatal("size 只作参考，不符不应阻断下载", e)
+	}
+	got, err := os.ReadFile(dest)
+	must(t, err)
+	if string(got) != "hello" {
+		t.Fatal("应以服务器实际内容落盘", string(got))
+	}
+	if logged.Load() != 1 {
+		t.Fatal("大小不符应记一条降级日志", logged.Load())
+	}
+}
+
+// [fork-local] 未钉哈希（空）时跳过校验：内容任意都应成功落盘且不记降级日志。
+func TestFileEmptyHashSkipsVerification(t *testing.T) {
+	quick(t, time.Second)
+	var logged atomic.Int32
+	SetAdvisoryLogger(func(string, ...any) { logged.Add(1) })
+	t.Cleanup(func() { SetAdvisoryLogger(nil) })
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("payload"))
+	}))
+	defer server.Close()
+	dest := filepath.Join(t.TempDir(), "file")
+	if e := File(context.Background(), server.Client(), server.URL, dest, "", 0, noProgress); e != nil {
+		t.Fatal("空哈希应直接成功", e)
+	}
+	if !exists(dest) {
+		t.Fatal("应落盘")
+	}
+	if logged.Load() != 0 {
+		t.Fatal("未钉哈希不应记校验日志")
 	}
 }
 

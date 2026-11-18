@@ -266,7 +266,9 @@ func TestDownloadAndArchives(t *testing.T) {
 				digest = strings.Repeat("0", 64)
 			}
 			e := download.File(ctx, server.Client(), server.URL, dest, digest, int64(len(b)), func(int64, int64) {})
-			if mode == "resume" || mode == "restart" {
+			// [fork-local] sha256 改为参考校验：钉死值不符但内容正确时不再阻断下载，正常落盘；
+			// 仍失败的只有区间非法与主动取消。
+			if mode == "resume" || mode == "restart" || mode == "bad-hash" {
 				must(t, e)
 				got, e := os.ReadFile(dest)
 				must(t, e)

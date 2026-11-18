@@ -422,6 +422,55 @@ func (m ModelPackage) FileURL(source, path string) (string, error) {
 	return "", msg.Err(msg.ErrDownloadSource, nil)
 }
 
+// FileDownloadSpec 描述用官方 SDK（modelscope / huggingface_hub）下载某个文件所需的参数。
+type FileDownloadSpec struct {
+	Source   string // "modelscope" 或 "huggingface"
+	Repo     string // SDK 仓库 id
+	Revision string // SDK 版本：ModelScope 用分支（master）或镜像提交，Hugging Face 用提交
+	Filename string // 仓库内路径
+	Endpoint string // Hugging Face 基础地址；官方默认或 ModelScope 时为空
+}
+
+// PackageFileDownloadSpec 与 PackageFileURL 平行：把 (源偏好, 文件) 解析成官方 SDK 的下载参数。
+// 分支逻辑与 FileURL 一致：文件另写来源仓库时按该仓库；ModelScope 偏好下无镜像则改用 hf-mirror 端点。
+func (m ModelPackage) PackageFileDownloadSpec(source string, file ModelFile) (FileDownloadSpec, error) {
+	if file.Repo != "" {
+		m.Repo, m.Revision, m.ModelScope = file.Repo, file.Revision, ""
+	}
+	revision := m.Revision
+	if revision == "" {
+		revision = Revision
+	}
+	switch source {
+	case "huggingface":
+		repo := m.Repo
+		if repo == "" {
+			repo = "audio-cpp/audio.cpp-gguf"
+		}
+		return FileDownloadSpec{Source: "huggingface", Repo: repo, Revision: revision, Filename: file.Path}, nil
+	case "modelscope":
+		if m.Repo != "" {
+			if m.ModelScope != "" {
+				return FileDownloadSpec{Source: "modelscope", Repo: m.ModelScope, Revision: "master", Filename: file.Path}, nil
+			}
+			// 该仓库没有 ModelScope 镜像：走 Hugging Face SDK 但用 hf-mirror 端点（与 PackageFileURL 一致）。
+			return FileDownloadSpec{Source: "huggingface", Repo: m.Repo, Revision: revision, Filename: file.Path, Endpoint: "https://hf-mirror.com"}, nil
+		}
+		msRev := ModelScopeRevision
+		if m.modelScopeRevision != "" {
+			msRev = m.modelScopeRevision
+		}
+		return FileDownloadSpec{Source: "modelscope", Repo: "HereIsMark/audio.cpp-gguf", Revision: msRev, Filename: file.Path}, nil
+	case "mirror":
+		repo := m.Repo
+		if repo == "" {
+			repo = "audio-cpp/audio.cpp-gguf"
+		}
+		return FileDownloadSpec{Source: "huggingface", Repo: repo, Revision: revision, Filename: file.Path, Endpoint: "https://hf-mirror.com"}, nil
+	}
+	return FileDownloadSpec{}, msg.Err(msg.ErrDownloadSource, nil)
+}
+
 type RuntimeArchive struct{ Name, Hash string }
 
 func RuntimeArchives(backend string) ([]RuntimeArchive, error) {

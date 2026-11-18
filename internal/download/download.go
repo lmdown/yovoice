@@ -30,6 +30,16 @@ var (
 
 const maxRetries = 3
 
+// [fork-local] sha256 由强制校验改为参考：下载完成时若与钉死值不符，只通过此回调记一条日志、不删包不报错。
+// 由 workbench 启动时注入带数据目录的 diag.Log；未注入则静默。size 校验不受影响。
+var advisoryLog func(event string, fields ...any)
+
+// SetAdvisoryLogger 注入校验降级时的日志回调（见 attempt 的 sha256 参考校验）。
+func SetAdvisoryLogger(fn func(event string, fields ...any)) { advisoryLog = fn }
+
+// matches 判定实算哈希是否满足钉死值：未钉（空）视为始终满足，钉了则须相等。
+func matches(hash, got string) bool { return hash == "" || hash == got }
+
 // partialMeta 记录 .part 的来源，续传前据此判断服务器上是否还是同一份文件。
 type partialMeta struct {
 	URL          string `json:"url"`
@@ -149,7 +159,7 @@ func File(ctx context.Context, client *http.Client, url, destination, hash strin
 	if e := os.MkdirAll(filepath.Dir(destination), 0700); e != nil {
 		return e
 	}
-	if h, e := Hash(ctx, destination); e == nil && h == hash {
+	if h, e := Hash(ctx, destination); e == nil && matches(hash, h) {
 		return nil
 	}
 	partial := destination + ".part"
@@ -173,7 +183,7 @@ func attempt(ctx context.Context, client *http.Client, url, destination, partial
 		if e != nil {
 			return false, hashErr(ctx, e)
 		}
-		if h == hash && offset == expected {
+		if matches(hash, h) && offset == expected {
 			return false, finishPartial(partial, destination)
 		}
 		if e = removePartial(partial); e != nil {
@@ -247,7 +257,7 @@ func attempt(ctx context.Context, client *http.Client, url, destination, partial
 		if e != nil {
 			return false, hashErr(ctx, e)
 		}
-		if h == hash && (expected == 0 || offset == expected) {
+		if matches(hash, h) && (expected == 0 || offset == expected) {
 			return false, finishPartial(partial, destination)
 		}
 		_ = removePartial(partial)
@@ -267,16 +277,28 @@ func attempt(ctx context.Context, client *http.Client, url, destination, partial
 	} else {
 		offset = 0
 	}
+	// 服务器报告的完整大小：range 响应用 rangeTotal，普通响应用 offset+ContentLength。
+	serverTotal := rangeTotal
+	if serverTotal == 0 && res.ContentLength >= 0 {
+		serverTotal = offset + res.ContentLength
+	}
 	total := expected
-	if total == 0 {
+	// [fork-local] size 由强制校验改为参考：钉死值与服务器实际大小不符时采用服务器大小继续下载，
+	// 只记一条日志、不阻断（自量化档重传导致大小变化时仍能下载）。未钉死时同样以服务器大小为准。
+	if serverTotal > 0 {
+		if expected == 0 {
+			total = serverTotal
+		} else if serverTotal != expected {
+			if advisoryLog != nil {
+				advisoryLog("download.size_advisory", "url", url, "want", expected, "got", serverTotal)
+			}
+			total = serverTotal
+		}
+	} else if total == 0 {
 		total = rangeTotal
 		if total == 0 && res.ContentLength > 0 {
 			total = offset + res.ContentLength
 		}
-	}
-	if expected > 0 && ((rangeTotal > 0 && rangeTotal != expected) ||
-		(rangeTotal == 0 && res.ContentLength >= 0 && res.ContentLength != expected)) {
-		return false, msg.Err(msg.ErrDownloadSize, nil)
 	}
 	flags := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
 	if offset > 0 {
@@ -341,9 +363,9 @@ func attempt(ctx context.Context, client *http.Client, url, destination, partial
 	if e != nil {
 		return false, hashErr(ctx, e)
 	}
-	if h != hash {
-		_ = removePartial(partial)
-		return false, msg.Err(msg.ErrDownloadChecksum, nil)
+	// [fork-local] sha256 只作参考：钉了非空值却不符时记一条日志、继续落盘（不删包、不报错）；未钉则跳过。
+	if hash != "" && h != hash && advisoryLog != nil {
+		advisoryLog("download.checksum_advisory", "url", url, "want", hash, "got", h)
 	}
 	if e = ctx.Err(); e != nil {
 		return false, e

@@ -48,3 +48,30 @@ func TestForkModelsMerged(t *testing.T) {
 		t.Error("yue2 sidecar 应从 audio-cpp 仓库下载:", side)
 	}
 }
+
+// [fork-local] PackageFileDownloadSpec 与 PackageFileURL 平行：自量化主文件走 ModelScope SDK，
+// 跨仓 sidecar 走 Hugging Face SDK 但用 hf-mirror 端点。
+func TestForkDownloadSpec(t *testing.T) {
+	idx, err := Lookup("index-2.5-q3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec, err := idx.PackageFileDownloadSpec("modelscope", idx.MainFile())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if spec.Source != "modelscope" || spec.Repo != "rookie6667/IndexTTS2.5-GGUF" || spec.Revision != "master" || spec.Filename != "index-tts2_5-q3_k.gguf" {
+		t.Error("自量化档 SDK 规格错误:", spec)
+	}
+	m, err := Lookup("yue2-3b-q3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	side, err := m.PackageFileDownloadSpec("modelscope", m.Files[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if side.Source != "huggingface" || side.Repo != "audio-cpp/Yue2-3B-GGUF" || side.Endpoint != "https://hf-mirror.com" {
+		t.Error("跨仓 sidecar 应走 hf-mirror 端点的 Hugging Face SDK:", side)
+	}
+}

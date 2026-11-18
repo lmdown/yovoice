@@ -26,6 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     private var storageRelocated = false
     private var relaunchOnExit = false
     private var updater: AppUpdater?
+    // [fork-local] P1-1：当前是否处于沉浸（播放器全屏）态，供标题栏双击缩放监视器判断；监视器引用需常驻。
+    private var immersive = false
+    private var titleClickMonitor: Any?
     // 延迟到单实例检查之后解析，数据目录缺失时才弹出处理选项。
     private lazy var root: URL = DataRoot.confirmAvailable(DataRoot.resolve())
     private var cookieName: String { "vw-" + token.prefix(12) }
@@ -101,6 +104,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         NSApp.activate(ignoringOtherApps: true)
         do { try startService() } catch { showError(error) }
         updater?.start()
+        installTitlebarZoomMonitor()
+    }
+
+    // [fork-local] P1-1：macOS 原生标题栏的双击行为默认跟随系统偏好（Desktop & Dock › 双击窗口，常被设成"最小化"），
+    // 本应用想要的是与 Windows 一致的确定行为：双击标题栏空白处 = 缩放/还原（performZoom）。
+    // 只在普通态、双击、且落点位于内容区之上且不命中红绿灯/左右附件按钮时拦截并缩放，其余事件原样返回给系统，
+    // 因此不会碰到网页内的双击（歌词、助手面板展开等）与窗口拖拽。真机验证点：双击标题栏空白应最大化/还原，
+    // 双击红绿灯与侧栏/检查器/助手按钮不应被吞。
+    private func installTitlebarZoomMonitor() {
+        titleClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+            guard let self, let window = self.window, event.window === window,
+                  !self.immersive, event.clickCount == 2,
+                  let content = window.contentView else { return event }
+            let point = event.locationInWindow
+            let contentRect = content.convert(content.bounds, to: nil)
+            // 标题栏 = 内容区上方那条；同时避开原生控件，命中则不拦截，交给控件自己。
+            guard point.y >= contentRect.maxY, !self.clickOnWindowControls(point) else { return event }
+            window.performZoom(nil)
+            return nil
+        }
+    }
+
+    /// 标题栏上的可交互控件（三个红绿灯 + 左右标题栏附件：侧栏/检查器/助手按钮）是否覆盖了该点。
+    private func clickOnWindowControls(_ point: NSPoint) -> Bool {
+        for kind in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+            if let button = window.standardWindowButton(kind), button.convert(button.bounds, to: nil).contains(point) { return true }
+        }
+        for accessory in window.titlebarAccessoryViewControllers {
+            let view = accessory.view
+            if view.convert(view.bounds, to: nil).contains(point) { return true }
+        }
+        return false
     }
 
     @objc private func toggleSidebar() {
@@ -168,6 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     // 播放页打开时网页铺到标题栏下面，标题栏与播放页背景融为一体，只留红绿灯；
     // chrome 为假（播放中静置、控件隐藏）时红绿灯也隐藏，录屏画面里没有窗口按钮。关闭播放页后恢复原样。
     private func setImmersive(_ active: Bool, chrome: Bool) {
+        immersive = active // [fork-local] P1-1：沉浸态下标题栏被网页铺满，禁用双击缩放监视器
         if active { window.styleMask.insert(.fullSizeContentView) } else { window.styleMask.remove(.fullSizeContentView) }
         window.titleVisibility = active ? .hidden : .visible
         // 只设控制器的 isHidden 时，较新的 macOS 上左右两侧的附件仍会留在标题栏里（播放页左上角露出侧栏按钮），连同附件视图一起隐藏。

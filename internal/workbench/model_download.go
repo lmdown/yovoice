@@ -3,19 +3,94 @@ package workbench
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
+	"time"
 	"yovoice/internal/catalog"
+	"yovoice/internal/diag"
 	"yovoice/internal/download"
 	"yovoice/internal/msg"
 	"yovoice/internal/platform"
 	"yovoice/internal/schema"
 	"yovoice/internal/store"
+	"yovoice/internal/workbench/sdkdownload"
 )
 
 var modelTransferDirectory = regexp.MustCompile(`^\.yovoice-model-[0-9a-f]{32}$`)
+
+// [fork-local] stagedBytes 统计某个包内文件已经落地的字节数，兼容两种传输布局：目标文件本身、
+// Go 下载器的 *.part，以及 SDK 子进程的 *.sdktmp 暂存目录树里最大的分片（Hugging Face / ModelScope
+// 的 *.incomplete）。暂停/失败时据此回报真实进度，避免 SDK 路径把已下载字节算成 0（进度条归零）；
+// 也与 worker.py 的 watch_size 口径一致，保证续传后首个轮询值能接上。
+func stagedBytes(path string) int64 {
+	size := max(download.FileSize(path), download.FileSize(path+".part"))
+	staging := path + ".sdktmp"
+	if info, err := os.Stat(staging); err == nil && info.IsDir() {
+		_ = filepath.WalkDir(staging, func(p string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			if fi, e := d.Info(); e == nil && fi.Size() > size {
+				size = fi.Size()
+			}
+			return nil
+		})
+	}
+	return size
+}
+
+// [fork-local] reconcilePendingDownloads 在服务启动时按磁盘实际字节修正未完成下载任务的进度。
+// progressOf 只写内存不落库，job.Received 仅在暂停/失败/完成那一刻才持久化；若下载途中 App 被强杀
+// （调试重建常见），库里 Received 会停在 0，但传输目录里的 .part / .sdktmp 分片仍在，重开模型页就表现为
+// “进度 0 却已有未下完的文件”。这里逐个任务用 stagedBytes 重算已下字节并回写，与暂停口径一致。
+func (w *Workbench) reconcilePendingDownloads() {
+	s := w.Store.Read()
+	if len(s.ModelDownloads) == 0 {
+		return
+	}
+	received := map[string]int64{}
+	for id, job := range s.ModelDownloads {
+		definition, err := catalog.Lookup(id)
+		if err != nil {
+			continue
+		}
+		model, err := definition.At(job.Version)
+		if err != nil {
+			continue
+		}
+		root := modelTransferPath(job)
+		if root == "" {
+			continue
+		}
+		var total int64
+		for _, file := range model.PackageFiles() {
+			path := filepath.Join(root, filepath.Base(file.Path))
+			if len(model.Files) > 0 {
+				path = filepath.Join(root, filepath.FromSlash(model.LocalPath(file.Path)))
+			}
+			total += min(file.Size, stagedBytes(path))
+		}
+		if total != job.Received {
+			received[id] = total
+		}
+	}
+	if len(received) == 0 {
+		return
+	}
+	_ = w.Store.Update(func(state *schema.State) {
+		for id, r := range received {
+			if job, ok := state.ModelDownloads[id]; ok {
+				job.Received = r
+				state.ModelDownloads[id] = job
+			}
+		}
+	}, true)
+}
 
 func modelTransferPath(job schema.ModelDownload) string {
 	name := ".yovoice-model-" + job.Token
@@ -125,6 +200,27 @@ func (w *Workbench) downloadModelFiles(ctx context.Context, model catalog.ModelP
 		}
 	}
 	files := model.PackageFiles()
+	// [fork-local] 记一条下载通道判定：transport=sdk 表示走了 venv 里的官方 SDK（source 进一步区分
+	// modelscope / huggingface / mirror），transport=go 表示回退内建 Go 下载器。方便用日志确认实际是否用了 modelscope。
+	// dir=模型最终安装目录，staging=本次下载的暂存目录（下完校验通过后原子重命名进 dir），方便确认到底下到哪。
+	python, useSDK := w.sdkUsable()
+	transport := "go"
+	if useSDK {
+		transport = "sdk"
+	}
+	diag.Log(w.Store.Root, "download.transport", "model", model.ID, "transport", transport, "source", source, "python", python, "dir", job.Directory, "staging", root)
+	// [fork-local] 走 SDK 时把 worker 子进程的原生输出（modelscope / huggingface 的下载进度、tqdm）
+	// 逐行转写到 logs/sdk.log，方便在终端 tail 排查；Go 回退路径不产生该文件。
+	var sdkOut io.Writer
+	if useSDK {
+		if err := os.MkdirAll(filepath.Join(w.Store.Root, "logs"), 0755); err == nil {
+			if f, e := os.OpenFile(filepath.Join(w.Store.Root, "logs", "sdk.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); e == nil {
+				defer f.Close()
+				fmt.Fprintf(f, "\n##### model %s @ %s (%s)\n", model.ID, model.Name, time.Now().Format(time.RFC3339))
+				sdkOut = f
+			}
+		}
+	}
 	dest := func(file catalog.ModelFile) string {
 		if len(model.Files) == 0 {
 			return filepath.Join(root, filepath.Base(file.Path))
@@ -139,7 +235,7 @@ func (w *Workbench) downloadModelFiles(ctx context.Context, model catalog.ModelP
 	for _, file := range files {
 		path := dest(file)
 		// 旧包中未变化的文件可在同一磁盘用硬链接复用。硬链接失败时按正常下载计算空间。
-		if previous.Managed && download.FileSize(path) == 0 && download.FileSize(path+".part") == 0 {
+		if previous.Managed && stagedBytes(path) == 0 {
 			old := previous.Path
 			if len(model.Files) > 0 {
 				old = filepath.Join(old, filepath.FromSlash(model.LocalPath(file.Path)))
@@ -155,7 +251,7 @@ func (w *Workbench) downloadModelFiles(ctx context.Context, model catalog.ModelP
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		need += max(int64(0), file.Size-max(download.FileSize(path), download.FileSize(path+".part")))
+		need += max(int64(0), file.Size-stagedBytes(path))
 	}
 	if available < uint64(need) {
 		return msg.Err(msg.ErrModelDirSpace, nil)
@@ -163,7 +259,7 @@ func (w *Workbench) downloadModelFiles(ctx context.Context, model catalog.ModelP
 
 	var done int64
 	for i, file := range files {
-		if err := download.File(ctx, w.client, urls[i], dest(file), file.SHA256, file.Size, func(received, _ int64) {
+		if err := w.fetchFile(ctx, model, file, source, urls[i], dest(file), sdkOut, func(received, _ int64) {
 			code := msg.ActivityDownloading
 			if done+received >= job.Total {
 				code = msg.ActivityVerifying
@@ -171,7 +267,7 @@ func (w *Workbench) downloadModelFiles(ctx context.Context, model catalog.ModelP
 			w.progressOf("download", code, msg.Params{"name": model.Name}, done+received, job.Total)
 		}); err != nil {
 			path := dest(file)
-			received := min(file.Size, max(download.FileSize(path), download.FileSize(path+".part")))
+			received := min(file.Size, stagedBytes(path))
 			w.progressOf("download", msg.ActivityDownloading, msg.Params{"name": model.Name}, done+received, job.Total)
 			return err
 		}
@@ -201,6 +297,21 @@ func (w *Workbench) downloadModelFiles(ctx context.Context, model catalog.ModelP
 	doomed, err := w.publishModelDownload(ctx, model, job, path, latest)
 	w.removeRetiredModelFiles(model.ID, doomed)
 	return err
+}
+
+// [fork-local] fetchFile 择路下载包内单个文件：装了 venv（YOVOICE_PYTHON 或 <appRoot>/venv 且可导入
+// modelscope+huggingface_hub）时改走官方 Python SDK 下载；否则回退内建 Go 下载器（原路径不变）。
+// 进度、暂停/取消（ctx 杀进程）、空间预检、原子发布仍由上层 downloadModelFiles 统一负责。
+func (w *Workbench) fetchFile(ctx context.Context, model catalog.ModelPackage, file catalog.ModelFile, source, url, destPath string, logw io.Writer, progress func(received, total int64)) error {
+	if python, ok := w.sdkUsable(); ok {
+		if spec, err := model.PackageFileDownloadSpec(source, file); err == nil {
+			return sdkdownload.File(ctx, python, sdkdownload.Spec{
+				Source: spec.Source, Repo: spec.Repo, Revision: spec.Revision,
+				Filename: spec.Filename, Dest: destPath, Endpoint: spec.Endpoint, Total: file.Size,
+			}, progress, logw)
+		}
+	}
+	return download.File(ctx, w.client, url, destPath, file.SHA256, file.Size, progress)
 }
 
 // publishModelDownload 提交完整的新包，再把旧包移出原位；失败或中断时旧包仍能使用。

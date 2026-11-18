@@ -164,7 +164,8 @@ func TestModelPackageFailureKeepsPreviousAndDoesNotOverwriteLocalFiles(t *testin
 		if strings.HasSuffix(req.URL.Path, "main.gguf") {
 			_, _ = out.Write(main)
 		} else if bad.Load() {
-			_, _ = out.Write([]byte("bad config"))
+			// [fork-local] sha256 改为参考校验后，内容不符不再阻断下载；用 500 传输错误保留“下载失败→回滚”的覆盖。
+			out.WriteHeader(http.StatusInternalServerError)
 		} else {
 			_, _ = out.Write(side)
 		}
@@ -471,5 +472,61 @@ func TestCancelActiveModelDownloadStopsTransferAndKeepsInstallation(t *testing.T
 	must(t, err)
 	if string(data) != "old" {
 		t.Fatal(string(data))
+	}
+}
+
+// [fork-local] stagedBytes 必须把 SDK 子进程的 .sdktmp 暂存目录算作已下载字节，
+// 否则 SDK 路径暂停时上层重算会归零（进度条塌回 0）。
+func TestStagedBytesCountsSDKTmpStaging(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "model.gguf")
+	// 目标文件与 .part 都不存在时，SDK 分片仍要计入。
+	staging := path + ".sdktmp"
+	must(t, os.MkdirAll(filepath.Join(staging, ".cache", "download"), 0700))
+	must(t, os.WriteFile(filepath.Join(staging, ".cache", "download", "model.gguf.incomplete"), bytes.Repeat([]byte("x"), 4096), 0600))
+	if got := stagedBytes(path); got != 4096 {
+		t.Fatal("SDK 暂停应统计 .sdktmp 分片字节", got)
+	}
+	// 与 Go 的 .part 取最大，谁多算谁。
+	must(t, os.WriteFile(path+".part", bytes.Repeat([]byte("y"), 8192), 0600))
+	if got := stagedBytes(path); got != 8192 {
+		t.Fatal("应取 .part 与 .sdktmp 中的较大值", got)
+	}
+	// 完成后的目标文件同样能读到。
+	must(t, os.WriteFile(path, bytes.Repeat([]byte("z"), 12288), 0600))
+	if got := stagedBytes(path); got != 12288 {
+		t.Fatal("应读到已完成的目标文件", got)
+	}
+}
+
+// [fork-local] 下载途中被强杀后重启：传输目录里分片还在，但库里 Received 停在 0；
+// 启动自检应按磁盘实际字节把进度补回来，而不是新进入模型页时显示 0。
+func TestReconcilePendingDownloadsRestoresProgressOnBoot(t *testing.T) {
+	root := t.TempDir()
+	w, err := New(root)
+	must(t, err)
+	model, err := catalog.Lookup("index-2-q8")
+	must(t, err)
+	job := schema.ModelDownload{Token: schema.NewID(), Directory: t.TempDir(), Version: model.MainFile().SHA256, Status: "paused", Received: 0, Total: model.Size}
+	stage := modelTransferPath(job)
+	must(t, os.MkdirAll(stage, 0700))
+	file := model.PackageFiles()[0]
+	path := filepath.Join(stage, filepath.Base(file.Path))
+	if len(model.Files) > 0 {
+		path = filepath.Join(stage, filepath.FromSlash(model.LocalPath(file.Path)))
+	}
+	must(t, os.MkdirAll(filepath.Dir(path), 0700))
+	payload := bytes.Repeat([]byte("x"), 1<<20)
+	must(t, os.WriteFile(path+".part", payload, 0600))
+	must(t, w.Store.Update(func(s *schema.State) {
+		s.ModelDownloads = map[string]schema.ModelDownload{model.ID: job}
+	}, true))
+	w.Close()
+
+	w2, err := New(root)
+	must(t, err)
+	defer w2.Close()
+	if got := w2.Store.Read().ModelDownloads[model.ID].Received; got != int64(len(payload)) {
+		t.Fatal("重启后应恢复到磁盘实际已下字节", got, len(payload))
 	}
 }
