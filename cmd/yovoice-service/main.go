@@ -125,7 +125,12 @@ func run() error {
 	if e = wb.RefreshRuntimeCapabilities(); e != nil {
 		return e
 	}
-	listener, e := net.Listen("tcp4", "127.0.0.1:0")
+	// [fork-local] 浏览器形态：脚本可用 WORKBENCH_PORT 指定固定端口（同 GRADIO_SERVER_PORT 思路）；未设置时维持随机端口。
+	listenAddr := "127.0.0.1:0"
+	if p := os.Getenv("WORKBENCH_PORT"); p != "" {
+		listenAddr = "127.0.0.1:" + p
+	}
+	listener, e := net.Listen("tcp4", listenAddr)
 	if e != nil {
 		return e
 	}

@@ -102,6 +102,15 @@ func (s *Server) call(ctx context.Context, method string, data json.RawMessage) 
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// [fork-local] 浏览器形态入口：携带正确 token 的首次访问发放鉴权 cookie 后回到首页。
+	// 仅限 GET /；token 不对则继续走原有校验（403），不回显任何内容。原生宿主仍走宿主注入 cookie，两不冲突。
+	if r.Method == http.MethodGet && r.URL.Path == "/" {
+		if t := r.URL.Query().Get("token"); t != "" && subtle.ConstantTimeCompare([]byte(t), []byte(s.Secret)) == 1 {
+			http.SetCookie(w, &http.Cookie{Name: "vw-" + s.Secret[:12], Value: s.Secret, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode})
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+	}
 	cookie, e := r.Cookie("vw-" + s.Secret[:12])
 	if !strings.HasPrefix(r.Host, "127.0.0.1:") || e != nil || subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(s.Secret)) != 1 || (r.Header.Get("Origin") != "" && r.Header.Get("Origin") != "http://"+r.Host) {
 		http.Error(w, "Forbidden", 403)

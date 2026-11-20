@@ -115,3 +115,49 @@ func TestExportAudioUpload(t *testing.T) {
 		t.Fatalf("上传的导出文件不完整：%v %v", info, e)
 	}
 }
+
+// [fork-local] 浏览器形态入口：?token= 首访发 cookie 并 302 回首页；错误 token、
+// 非首页路径都不得走此入口；发放的 cookie 能通过原有鉴权。
+func TestBrowserTokenEntry(t *testing.T) {
+	w, e := workbench.New(t.TempDir())
+	must(t, e)
+	defer w.Close()
+	secret := strings.Repeat("b", 64)
+	handler := &Server{Workbench: w, Assets: t.TempDir(), Secret: secret}
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	// 不自动跟随重定向，也不存 cookie，逐步检查服务行为。
+	client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	res, e := client.Get(server.URL + "/?token=" + secret)
+	must(t, e)
+	res.Body.Close()
+	if res.StatusCode != http.StatusFound || res.Header.Get("Location") != "/" {
+		t.Fatal(res.StatusCode, res.Header.Get("Location"))
+	}
+	var issued *http.Cookie
+	for _, c := range res.Cookies() {
+		if c.Name == "vw-"+secret[:12] {
+			issued = c
+		}
+	}
+	if issued == nil || issued.Value != secret || !issued.HttpOnly || issued.Path != "/" {
+		t.Fatal(res.Cookies())
+	}
+	res, e = client.Get(server.URL + "/?token=" + strings.Repeat("c", 64))
+	must(t, e)
+	if res.StatusCode != 403 {
+		res.Body.Close()
+		t.Fatal("wrong token:", res.StatusCode)
+	}
+	res.Body.Close()
+	// 错误 token 也不得发放 cookie；正确 cookie 应通过鉴权拿到页面（不再是 403）。
+	r, e := http.NewRequest("GET", server.URL+"/", nil)
+	must(t, e)
+	r.AddCookie(issued)
+	res, e = server.Client().Do(r)
+	must(t, e)
+	defer res.Body.Close()
+	if res.StatusCode == 403 {
+		t.Fatal("issued cookie rejected")
+	}
+}
