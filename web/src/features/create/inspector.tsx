@@ -2,7 +2,7 @@ import { AdvancedSettings, SeedInput, ReferenceVoice } from './shared-controls';
 import { KokoroControls } from './kokoro-controls';
 import { StreamingControl } from './streaming-control';
 import { ModelOptions } from './model-options';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import { Button } from '@astryxdesign/core/Button';
 import { HStack, VStack } from '@astryxdesign/core/Layout';
@@ -77,6 +77,11 @@ export function Inspector({ draft, state, catalog, change, chooseVoice, chooseEm
   const voiceModels = catalog.filter(model => isVoiceModel(model.id));
   // 当前模型的目录条目；目录里没有（目录更新后模型下架）时，需要条目的控件不渲染，页面不崩。
   const currentModel = catalog.find(model => model.id === draft.modelId);
+  // IndexTTS2 的「文字指导」靠 GGUF 内置的 Qwen 情绪分类子模型解码；q3 量化会把它跑坏
+  // （收不到 EOS，报 generateFailed）。这里对 IndexTTS2 的 q3 档禁用「文字指导」，
+  // 当前作品若仍是该档则回退到「跟随音色」。
+  const blockEmotionText = currentModel?.family === 'index_tts2' && /q3/i.test(currentModel.precision ?? '');
+  useEffect(() => { if (blockEmotionText && draft.mode === 'text') change({ mode: 'speaker' }); }, [blockEmotionText, draft.mode, change]);
   return <VStack as="aside" className={embedded ? undefined : "inspector"} gap={0}>
     {/* 生成与取消是两个不同的按钮（key 不同）：鼠标点了“生成”后焦点不会留在原地变成“取消生成”，再按空格不会误取消。 */}
     {!embedded ? <MorphFrame><VStack className="generation-action" gap={3}>
@@ -97,7 +102,7 @@ export function Inspector({ draft, state, catalog, change, chooseVoice, chooseEm
       <ReferenceVoice voice={voice} choose={chooseVoice} play={play} />
       <VStack gap={3}>
         <h3>{t('@yovoice.create.expression')}</h3>
-        <SegmentedControl size="sm" label={t('@yovoice.create.expression')} value={draft.mode} onChange={mode => change({ mode: mode as Mode })} layout="fill">{modes.map(id => <SegmentedControlItem onPointerEnter={overflowTitle} key={id} value={id} label={t(`@yovoice.create.mode.${id}`)} />)}</SegmentedControl>
+        <SegmentedControl size="sm" label={t('@yovoice.create.expression')} value={blockEmotionText && draft.mode === 'text' ? 'speaker' : draft.mode} onChange={mode => change({ mode: mode as Mode })} layout="fill">{modes.map(id => <SegmentedControlItem onPointerEnter={overflowTitle} key={id} value={id} isDisabled={blockEmotionText && id === 'text'} label={t(`@yovoice.create.mode.${id}`)} />)}</SegmentedControl>
         {draft.mode === 'reference' ? <ReferenceVoice voice={emotion} choose={chooseEmotion} play={play} label={t('@yovoice.create.mode.reference')} placeholder={t('@yovoice.create.addEmotionReference')} /> : null}
         {draft.mode === 'text' ? <VStack gap={3}>
           <TextArea label={t('@yovoice.create.emotionDescription')} isLabelHidden value={draft.emotionText} onChange={value => change({ emotionText: value.slice(0, 500) })} placeholder={t('@yovoice.create.emotionPlaceholder')} rows={3} isDisabled={draft.inferEmotion} />
