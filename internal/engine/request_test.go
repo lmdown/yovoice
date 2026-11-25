@@ -471,6 +471,74 @@ func TestBreezeRequest(t *testing.T) {
 	}
 }
 
+// 控制方式：各模板只带自己的控制项，取值换成上游原文；克隆不带控制项。
+func TestMingControls(t *testing.T) {
+	d := schema.DefaultDraft()
+	d.ModelID = "ming3-tts-0.5b-q8"
+	d.Text = "你好。"
+	d.SynthesisLanguage = "zh"
+	build := func(options map[string]any) (map[string]any, map[string]any) {
+		t.Helper()
+		d.ModelOptions = map[string]map[string]any{"ming3_tts": options}
+		must(t, schema.Validate(d))
+		p, err := BuildRequest(d, "", "")
+		must(t, err)
+		r := p["request"].(map[string]any)
+		return r, r["options"].(map[string]any)
+	}
+	equal := func(got map[string]any, want map[string]any) {
+		t.Helper()
+		if len(got) != len(want) {
+			t.Fatal(got, want)
+		}
+		for key, value := range want {
+			if got[key] != value {
+				t.Fatal(got, want)
+			}
+		}
+	}
+	d.Speaker = "灵风信_生气"
+	_, o := build(map[string]any{"template_name": "ip", "emotion": "sad"})
+	equal(o, map[string]any{"template_name": "ip", "voice_id": "灵风信_生气"})
+	_, o = build(map[string]any{"template_name": "emotion", "emotion": "angry"})
+	equal(o, map[string]any{"template_name": "emotion", "emotion": "愤怒"})
+	// 没选过的控制项用默认值。
+	_, o = build(map[string]any{"template_name": "basic", "speed": "fast"})
+	equal(o, map[string]any{"template_name": "basic", "speed": "快速", "pitch": "中", "volume": "中"})
+	r, o := build(map[string]any{"template_name": "dialect", "dialect": "chuanyu"})
+	equal(o, map[string]any{"template_name": "dialect", "dialect": "chuanyu dialect"})
+	if _, ok := r["language"]; ok {
+		t.Fatal("方言模板不带目标语言", r)
+	}
+	d.VoiceDescription = " 像在讲睡前故事 "
+	_, o = build(map[string]any{"template_name": "freeform"})
+	equal(o, map[string]any{"template_name": "freeform", "instruct": "像在讲睡前故事"})
+
+	d.VoiceMode = "clone"
+	p, err := BuildRequest(d, "voice.wav", "")
+	must(t, err)
+	if o := p["request"].(map[string]any)["options"].(map[string]any); len(o) != 0 {
+		t.Fatal("克隆不带控制项", o)
+	}
+	d.VoiceMode = "design"
+	for _, invalid := range []struct {
+		speaker, description string
+		options              map[string]any
+	}{
+		{"灵晓声", "", map[string]any{"template_name": "ip"}}, // 带情感变体的音色必须带情感
+		{"未收录", "", map[string]any{"template_name": "ip"}},
+		{"", " ", map[string]any{"template_name": "freeform"}},
+		{"", "", map[string]any{"template_name": "multilingual"}},
+		{"", "", map[string]any{"emotion": "高兴"}},
+	} {
+		d.Speaker, d.VoiceDescription = invalid.speaker, invalid.description
+		d.ModelOptions = map[string]map[string]any{"ming3_tts": invalid.options}
+		if schema.Validate(d) == nil {
+			t.Fatal("应拒绝", invalid)
+		}
+	}
+}
+
 func TestMingRequest(t *testing.T) {
 	d := schema.DefaultDraft()
 	d.ModelID = "ming3-tts-0.5b-q8"
@@ -809,5 +877,45 @@ func TestDramaRequest(t *testing.T) {
 	}
 	if r := p["request"].(map[string]any); r["voice_ref"] != nil {
 		t.Fatal(r)
+	}
+}
+
+func TestAudio8Request(t *testing.T) {
+	d := schema.DefaultDraft()
+	d.ModelID = "audio8-tts-0.6b-q8"
+	d.Text = " 你好，欢迎收听。 "
+	d.ModelOptions = map[string]map[string]any{"audio8_tts": {"temperature": 0.7, "top_p": 0.9, "top_k": float64(20), "max_tokens": float64(800), "text_chunk_size": float64(120)}}
+	seed := 5
+	d.Seed = &seed
+	p, err := BuildRequest(d, "ignored.wav", "")
+	must(t, err)
+	r := p["request"].(map[string]any)
+	o := r["options"].(map[string]any)
+	if r["text"] != "你好，欢迎收听。" || r["voice_ref"] != nil || r["language"] != nil || o["temperature"] != 0.7 || o["top_p"] != 0.9 || o["top_k"] != float64(20) || o["max_tokens"] != float64(800) || o["text_chunk_size"] != float64(120) || o["seed"] != seed || d.RequiresVoice() {
+		t.Fatal(r)
+	}
+	must(t, schema.Validate(d))
+	d.VoiceMode = "clone"
+	d.ReferenceText = " 参考原文。 "
+	p, err = BuildRequest(d, "voice.wav", "")
+	must(t, err)
+	r = p["request"].(map[string]any)
+	o = r["options"].(map[string]any)
+	if r["voice_ref"] != "voice.wav" || o["reference_text"] != "参考原文。" || !d.RequiresVoice() {
+		t.Fatal(r)
+	}
+	// 引擎在克隆时要求参考原文，缺了在生成前就拒绝。
+	d.ReferenceText = ""
+	if schema.Validate(d) == nil {
+		t.Fatal("Audio8 克隆必须提供参考原文")
+	}
+	// 引擎的温度不含 0 和 2，top_p 不含 0。
+	for _, options := range []map[string]any{{"temperature": float64(0)}, {"temperature": float64(2)}, {"top_p": float64(0)}} {
+		invalid := schema.DefaultDraft()
+		invalid.ModelID = "audio8-tts-0.6b-bf16"
+		invalid.ModelOptions = map[string]map[string]any{"audio8_tts": options}
+		if _, err := BuildRequest(invalid, "", ""); err == nil {
+			t.Fatal("应拒绝超出引擎范围的参数", options)
+		}
 	}
 }

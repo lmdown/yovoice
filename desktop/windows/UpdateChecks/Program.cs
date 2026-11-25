@@ -30,4 +30,21 @@ Reject(() => UpdateRelease.Checksum($"invalid  {name}", name));
 var parsed = System.Text.Json.JsonSerializer.Deserialize<UpdateRelease>("""{"tag_name":"v0.10.0","draft":false,"prerelease":false,"assets":[],"body":"### English\n- New","published_at":"2026-10-11T08:00:00Z"}""", new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 Require(parsed.Notes == "### English\n- New" && parsed.PublishedAt == DateTimeOffset.Parse("2026-10-11T08:00:00Z"));
 Require((release with { Body = new string('x', 30000) }).Notes!.Length == 20000 && release.Notes is null);
-Console.WriteLine("版本比较、正式版筛选、Setup 选择、下载地址和校验文件、发布说明检查通过。");
+// GitHub 限流（403/429）说明原因与重试时间，其他错误状态仍提示服务暂不可用。
+HostL10n.Apply("en");
+var now = DateTimeOffset.FromUnixTimeSeconds(1_800_000_000);
+static HttpResponseMessage Response(System.Net.HttpStatusCode status, params (string Name, string Value)[] headers)
+{
+    var response = new HttpResponseMessage(status);
+    foreach (var (header, value) in headers) response.Headers.Add(header, value);
+    return response;
+}
+Require(UpdateRelease.ServiceError(Response(System.Net.HttpStatusCode.Forbidden, ("x-ratelimit-remaining", "0"), ("x-ratelimit-reset", "1800001450")), now) == "GitHub is temporarily limiting update checks. Try again in about 25 min.");
+Require(UpdateRelease.ServiceError(Response(System.Net.HttpStatusCode.Forbidden, ("Retry-After", "30")), now) == "GitHub is temporarily limiting update checks. Try again in about 1 min.");
+Require(UpdateRelease.ServiceError(Response(System.Net.HttpStatusCode.TooManyRequests), now) == "GitHub is temporarily limiting update checks. Try again later.");
+Require(UpdateRelease.ServiceError(Response(System.Net.HttpStatusCode.Forbidden, ("x-ratelimit-remaining", "12")), now) == "The update service is temporarily unavailable (HTTP 403). Try again later.");
+Require(UpdateRelease.ServiceError(Response(System.Net.HttpStatusCode.BadGateway), now) == "The update service is temporarily unavailable (HTTP 502). Try again later.");
+// 版本附带的 latest.json（scripts/release-manifest.py 生成）与 Releases 接口同形，按同一规则选更新包。
+var manifest = System.Text.Json.JsonSerializer.Deserialize<UpdateRelease>($$"""{"tag_name":"v0.10.0","draft":false,"prerelease":false,"published_at":"2026-11-24T08:00:00Z","body":"## [0.10.0]","assets":[{"name":"SHA256SUMS.txt","browser_download_url":"https://github.com/leemysw/yovoice/releases/download/v0.10.0/SHA256SUMS.txt"},{"name":"{{name}}","browser_download_url":"https://github.com/leemysw/yovoice/releases/download/v0.10.0/{{name}}"}]}""", new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+Require(manifest.Package("0.9.0")?.Name == name && manifest.Asset("SHA256SUMS.txt").Name == "SHA256SUMS.txt" && manifest.Notes == "## [0.10.0]");
+Console.WriteLine("版本比较、正式版筛选、Setup 选择、下载地址和校验文件、发布说明、限流提示、更新清单检查通过。");

@@ -40,6 +40,10 @@ enum HostL10n {
         return String(format: template, locale: Locale(identifier: locale == .en ? "en_US" : "zh_CN"), arguments: args)
     }
 
+    nonisolated static func has(_ key: String) -> Bool {
+        table[.en]?[key] != nil
+    }
+
     nonisolated private static func readStoredUiLocale() -> HostUiLocale? {
         let root = DataRoot.resolve()
         // 服务把界面语言写在 host-preferences.json；尚未被新版服务打开过的数据目录仍读旧版 state.json。
@@ -150,6 +154,9 @@ enum HostL10n {
             "err.updateWritable": "请将 yovoice 安装到可写的 Applications 文件夹后再更新。",
             "err.updateReplace": "当前应用位置不可替换，请从 GitHub 下载更新。",
             "err.updateUnavailable": "更新服务暂时不可用，请稍后重试。",
+            "err.updateUnavailableStatus": "更新服务暂时不可用（HTTP %ld），请稍后重试。",
+            "err.updateRateLimited": "GitHub 暂时限制了更新检查次数，请稍后重试。",
+            "err.updateRateLimitedRetry": "GitHub 暂时限制了更新检查次数，请约 %ld 分钟后重试。",
             "err.updateNetwork": "无法连接更新服务，请检查网络或代理后重试。",
             "err.updateDevBuild": "开发构建不支持自动替换，请安装正式发布版本。",
             "err.updateChecksum": "更新包校验失败，已删除下载文件，请重试。",
@@ -258,6 +265,9 @@ enum HostL10n {
             "err.updateWritable": "Install yovoice into a writable Applications folder before updating.",
             "err.updateReplace": "The current app location cannot be replaced. Download the update from GitHub.",
             "err.updateUnavailable": "Update service is temporarily unavailable. Try again later.",
+            "err.updateUnavailableStatus": "The update service is temporarily unavailable (HTTP %ld). Try again later.",
+            "err.updateRateLimited": "GitHub is temporarily limiting update checks. Try again later.",
+            "err.updateRateLimitedRetry": "GitHub is temporarily limiting update checks. Try again in about %ld min.",
             "err.updateNetwork": "Cannot reach the update service. Check your network or proxy and try again.",
             "err.updateDevBuild": "Development builds cannot auto-replace. Install a release build.",
             "err.updateChecksum": "Update checksum failed. The download was deleted. Try again.",

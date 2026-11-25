@@ -64,7 +64,8 @@ export const isPlapreModel = (id: string) => id.startsWith('plapre-');
 export const isXTTSModel = (id: string) => id.startsWith('xtts-v2-');
 export const isGradiumModel = (id: string) => id.startsWith('gradium-phonon-');
 export const isDramaModel = (id: string) => id.startsWith('fish-drama3-');
-export const requiresVoice = (draft: Draft) => isKokoroModel(draft.modelId) || isVoxtralModel(draft.modelId) || isGradiumModel(draft.modelId) || !isVoiceModel(draft.modelId) ? false : draft.modelId.startsWith('qwen3-tts-') ? !/customvoice|voicedesign/.test(draft.modelId) : draft.modelId.startsWith('omnivoice-') || isBreezeModel(draft.modelId) || isMingModel(draft.modelId) || isPlapreModel(draft.modelId) || isDramaModel(draft.modelId) ? draft.voiceMode === 'clone' : !isVoxModel(draft.modelId) || ['clone', 'continuation'].includes(draft.voxMode ?? 'design');
+export const isAudio8Model = (id: string) => id.startsWith('audio8-tts-');
+export const requiresVoice = (draft: Draft) => isKokoroModel(draft.modelId) || isVoxtralModel(draft.modelId) || isGradiumModel(draft.modelId) || !isVoiceModel(draft.modelId) ? false : draft.modelId.startsWith('qwen3-tts-') ? !/customvoice|voicedesign/.test(draft.modelId) : draft.modelId.startsWith('omnivoice-') || isBreezeModel(draft.modelId) || isMingModel(draft.modelId) || isPlapreModel(draft.modelId) || isDramaModel(draft.modelId) || isAudio8Model(draft.modelId) ? draft.voiceMode === 'clone' : !isVoxModel(draft.modelId) || ['clone', 'continuation'].includes(draft.voxMode ?? 'design');
 
 // [fork-local] P1-4 下载前硬件提示：GGUF 运行时峰值 ≈ 文件大小 + 运行开销（激活、声码器、KV 缓存），向上取到市场档位。
 // 与 Modang「显存推荐基于实测档位」约定一致：语音模型实测≈文件 + 0.5~1 GB；音乐（yue2/ace_step）长序列生成

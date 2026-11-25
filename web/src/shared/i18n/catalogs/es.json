@@ -218,17 +218,20 @@
   "@yovoice.create.maxTokens": {
     "defaultMessage": "Longitud máxima de generación"
   },
-  "@yovoice.create.mode.reference": {
+  "@yovoice.create.referencePerformance": {
     "defaultMessage": "Interpretación de referencia"
   },
+  "@yovoice.create.mode.reference": {
+    "defaultMessage": "Imitar"
+  },
   "@yovoice.create.mode.speaker": {
-    "defaultMessage": "Seguir la voz"
+    "defaultMessage": "Auto"
   },
   "@yovoice.create.mode.text": {
-    "defaultMessage": "Guía por texto"
+    "defaultMessage": "Texto"
   },
   "@yovoice.create.mode.vector": {
-    "defaultMessage": "Mezcla de emociones"
+    "defaultMessage": "Emoción"
   },
   "@yovoice.create.model": {
     "defaultMessage": "Modelo"
@@ -4217,6 +4220,9 @@
   "@yovoice.settings.modelDesc.drama": {
     "defaultMessage": "Etiquetas de hablante y evento · Voz predeterminada y clonación · 44.1 kHz"
   },
+  "@yovoice.settings.modelDesc.audio8": {
+    "defaultMessage": "11 idiomas · Voz predeterminada y clonación · 44,1 kHz"
+  },
   "@yovoice.options.silence_duration_sec": {
     "defaultMessage": "Silencio entre fragmentos (segundos)"
   },
@@ -4951,6 +4957,9 @@
   },
   "@yovoice.community.lyricsUnaligned": {
     "defaultMessage": "La letra aún no está sincronizada, así que no aparecerá en la página de la comunidad. Puedes sincronizarla antes en la página de reproducción."
+  },
+  "@yovoice.community.skipLyrics": {
+    "defaultMessage": "Compartir sin letra"
   },
   "@yovoice.community.terms": {
     "defaultMessage": "Tengo derecho a compartir esta canción y acepto las condiciones de la comunidad"
@@ -6032,6 +6041,9 @@
   "@yovoice.voice.noGenerated": {
     "defaultMessage": "Aún no hay voces generadas. Genera una para seleccionarla aquí como referencia."
   },
+  "@yovoice.voice.noVoices": {
+    "defaultMessage": "Aún no hay audio de referencia. Importa o graba audio para usarlo aquí."
+  },
   "@yovoice.voice.excerptTranscriptHelp": {
     "defaultMessage": "La transcripción debe coincidir con el fragmento. Tras recortarlo, vuelve a introducirla o transcríbela más tarde."
   },
@@ -6061,5 +6073,107 @@
   },
   "@yovoice.history.snapshotHelp": {
     "defaultMessage": "Esta configuración se guardó con la generación. Los cambios posteriores del proyecto o personaje no la modifican. No se deducen valores predeterminados del motor, hardware ni versiones de archivos del modelo que no se hayan registrado."
+  },
+  "@yovoice.ming.control": {
+    "defaultMessage": "Control"
+  },
+  "@yovoice.ming.controlHelp": {
+    "defaultMessage": "Cada generación usa un solo control."
+  },
+  "@yovoice.ming.control.voice_design": {
+    "defaultMessage": "Descripción de voz"
+  },
+  "@yovoice.ming.control.ip": {
+    "defaultMessage": "Voz integrada"
+  },
+  "@yovoice.ming.control.emotion": {
+    "defaultMessage": "Emoción"
+  },
+  "@yovoice.ming.control.dialect": {
+    "defaultMessage": "Dialecto"
+  },
+  "@yovoice.ming.control.basic": {
+    "defaultMessage": "Velocidad / tono / volumen"
+  },
+  "@yovoice.ming.control.freeform": {
+    "defaultMessage": "Instrucción libre"
+  },
+  "@yovoice.ming.freeform": {
+    "defaultMessage": "Instrucción libre"
+  },
+  "@yovoice.ming.freeformHelp": {
+    "defaultMessage": "Describe el tono, el ritmo y la expresión con tus palabras; no hace falta describir la voz."
+  },
+  "@yovoice.ming.freeformPlaceholder": {
+    "defaultMessage": "Por ejemplo: cuenta un cuento para dormir con voz suave y tranquila, como si consolaras a un niño."
+  },
+  "@yovoice.ming.emotionVoices": {
+    "defaultMessage": "Chino (con emociones)"
+  },
+  "@yovoice.ming.tagsHelp": {
+    "defaultMessage": "Elige una para añadirla al final del texto; la voz hará ese sonido ahí."
+  },
+  "@yovoice.ming.emotion.happy": {
+    "defaultMessage": "Alegre"
+  },
+  "@yovoice.ming.emotion.sad": {
+    "defaultMessage": "Triste"
+  },
+  "@yovoice.ming.emotion.angry": {
+    "defaultMessage": "Enfadado"
+  },
+  "@yovoice.ming.emotion.fearful": {
+    "defaultMessage": "Asustado"
+  },
+  "@yovoice.ming.emotion.disgusted": {
+    "defaultMessage": "Asqueado"
+  },
+  "@yovoice.ming.emotion.surprised": {
+    "defaultMessage": "Sorprendido"
+  },
+  "@yovoice.ming.emotion.neutral": {
+    "defaultMessage": "Neutral"
+  },
+  "@yovoice.ming.dialect.cantonese": {
+    "defaultMessage": "Cantonés"
+  },
+  "@yovoice.ming.dialect.chuanyu": {
+    "defaultMessage": "Dialecto de Sichuan"
+  },
+  "@yovoice.ming.speed.slow": {
+    "defaultMessage": "Lenta"
+  },
+  "@yovoice.ming.speed.medium": {
+    "defaultMessage": "Media"
+  },
+  "@yovoice.ming.speed.fast": {
+    "defaultMessage": "Rápida"
+  },
+  "@yovoice.ming.level.low": {
+    "defaultMessage": "Bajo"
+  },
+  "@yovoice.ming.level.medium": {
+    "defaultMessage": "Medio"
+  },
+  "@yovoice.ming.level.high": {
+    "defaultMessage": "Alto"
+  },
+  "@yovoice.options.template_name": {
+    "defaultMessage": "Control"
+  },
+  "@yovoice.options.emotion": {
+    "defaultMessage": "Emoción"
+  },
+  "@yovoice.options.dialect": {
+    "defaultMessage": "Dialecto"
+  },
+  "@yovoice.options.speed": {
+    "defaultMessage": "Velocidad"
+  },
+  "@yovoice.options.pitch": {
+    "defaultMessage": "Tono"
+  },
+  "@yovoice.options.volume": {
+    "defaultMessage": "Volumen"
   }
 }

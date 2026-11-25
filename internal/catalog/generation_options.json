@@ -384,6 +384,12 @@
     }
   ],
   "ming3_tts": [
+    {"key": "template_name", "type": "select", "default": "voice_design", "values": ["voice_design", "ip", "emotion", "dialect", "basic", "freeform"]},
+    {"key": "emotion", "type": "select", "default": "happy", "values": ["happy", "sad", "angry", "fearful", "disgusted", "surprised", "neutral"]},
+    {"key": "dialect", "type": "select", "default": "cantonese", "values": ["cantonese", "chuanyu"]},
+    {"key": "speed", "type": "select", "default": "medium", "values": ["slow", "medium", "fast"]},
+    {"key": "pitch", "type": "select", "default": "medium", "values": ["low", "medium", "high"]},
+    {"key": "volume", "type": "select", "default": "medium", "values": ["low", "medium", "high"]},
     {"key": "stream_chunk_policy","type": "select","default": "grow","values": ["grow","fixed"],"requiresRuntime": true,"streamOnly": true},
     {"key": "stream_frames_per_event","type": "number","default": 4,"min": 1,"max": 64,"step": 1,"requiresRuntime": true,"streamOnly": true},
     {
@@ -456,6 +462,13 @@
     {"key": "temperature", "type": "number", "default": 1, "min": 0, "max": 2, "step": 0.05},
     {"key": "max_tokens", "type": "number", "default": 1024, "min": 1, "max": 16384, "step": 1},
     {"key": "text_chunk_size", "type": "number", "default": 128, "min": 1, "max": 12000, "step": 1}
+  ],
+  "audio8_tts": [
+    {"key": "temperature", "type": "number", "default": 0.8, "min": 0.05, "max": 1.95, "step": 0.05},
+    {"key": "top_p", "type": "number", "default": 0.8, "min": 0.01, "max": 1, "step": 0.01},
+    {"key": "top_k", "type": "number", "default": 30, "min": 1, "max": 200, "step": 1},
+    {"key": "max_tokens", "type": "number", "default": 1024, "min": 1, "max": 4096, "step": 1},
+    {"key": "text_chunk_size", "type": "number", "default": 200, "min": 1, "max": 12000, "step": 1}
   ],
   "kokoro_tts": [
     {

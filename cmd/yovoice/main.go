@@ -52,6 +52,10 @@ Breeze TTS 2：--voice-mode design|clone、--voice-description TEXT（克隆时�
   --reference-text TEXT（克隆必填），采样参数用 --option，如 --option 'guidance_scale=3'。
 Ming 3.0 TTS：--voice-mode design|clone、--voice-description TEXT（仅设计）、
   --reference-text TEXT（克隆可选），--language auto|zh|en|ja|ko|de|fr|es。
+  控制方式用 --option 'template_name="ip|emotion|dialect|basic|freeform"'：ip 配 --speaker 灵小安（带情感的音色写成 灵风信_高兴），
+  emotion 配 --option 'emotion="happy"'，dialect 配 'dialect="cantonese|chuanyu"'，basic 配 speed / pitch / volume，
+  freeform 把 --voice-description 作为自由指令；正文里可插入 [Laughter] 等副语言标签。
+Audio8 TTS：--voice-mode design|clone（design 为默认音色），克隆需 --reference-text TEXT，语言自动识别。
 Qwen3-TTS Base：需要参考音频，--reference-text TEXT 可选；不提供原文时仅克隆音色。
 Qwen3-TTS CustomVoice：--speaker Vivian、可选 --voice-description TEXT；VoiceDesign：--voice-description TEXT。
 OmniVoice / Qwen3-TTS 支持 --language；OmniVoice 支持 --speed、--guidance-scale、--inference-steps。
@@ -156,7 +160,7 @@ func run(ctx context.Context, args []string, out, progress io.Writer) error {
 		}
 		fs.StringVar(&backend, "backend", initial, "推理设备")
 	case "models download":
-		fs.StringVar(&source, "source", "modelscope", "下载来源")
+		fs.StringVar(&source, "source", "", "下载来源，默认使用已保存的偏好；下载成功后保存指定来源")
 	case "voices import":
 		fs.StringVar(&name, "name", "", "音色名称")
 	case "separate":
@@ -179,7 +183,7 @@ func run(ctx context.Context, args []string, out, progress io.Writer) error {
 			nativeOptions[key] = parsed
 			return nil
 		})
-		fs.StringVar(&d.Speaker, "speaker", "", "Qwen3 CustomVoice 或 Kokoro 内置音色 ID")
+		fs.StringVar(&d.Speaker, "speaker", "", "Qwen3 CustomVoice、Kokoro 或 Ming 3.0 TTS 内置音色 ID")
 		fs.StringVar(&d.Text, "text", "", "正文")
 		fs.StringVar(&textFile, "text-file", "", "UTF-8 文本文件")
 		fs.StringVar(&music.lyrics, "lyrics", "", "音乐模型：歌词，可带 [Verse] 等段落标记")
@@ -273,7 +277,8 @@ func run(ctx context.Context, args []string, out, progress io.Writer) error {
 			xtts := strings.HasPrefix(d.ModelID, "xtts-v2-")
 			gradium := strings.HasPrefix(d.ModelID, "gradium-phonon-")
 			drama := strings.HasPrefix(d.ModelID, "fish-drama3-")
-			native := vox || omni || qwen || kokoro || breeze || ming || voxtral || plapre || xtts || gradium || drama
+			audio8 := strings.HasPrefix(d.ModelID, "audio8-tts-")
+			native := vox || omni || qwen || kokoro || breeze || ming || voxtral || plapre || xtts || gradium || drama || audio8
 			var unsupported string
 			fs.Visit(func(f *flag.Flag) {
 				if f.Name == "lyrics" || f.Name == "lyrics-file" || f.Name == "instrumental" || f.Name == "abc-file" {
@@ -285,12 +290,12 @@ func run(ctx context.Context, args []string, out, progress io.Writer) error {
 						unsupported = f.Name
 					}
 				}
-				if (vox || kokoro || breeze || voxtral || plapre || drama) && f.Name == "language" || native && !omni && f.Name == "speed" || native && f.Name == "emotion-text" ||
+				if (vox || kokoro || breeze || voxtral || plapre || drama || audio8) && f.Name == "language" || native && !omni && f.Name == "speed" || native && f.Name == "emotion-text" ||
 					!vox && f.Name == "vox-mode" || !(vox || omni) && (f.Name == "guidance-scale" || f.Name == "inference-steps") ||
-					!(strings.Contains(d.ModelID, "customvoice") || kokoro || voxtral || plapre) && f.Name == "speaker" ||
-					!(omni || breeze || ming || plapre || drama) && f.Name == "voice-mode" ||
+					!(strings.Contains(d.ModelID, "customvoice") || kokoro || voxtral || plapre || ming) && f.Name == "speaker" ||
+					!(omni || breeze || ming || plapre || drama || audio8) && f.Name == "voice-mode" ||
 					!(vox || omni || breeze || ming || strings.Contains(d.ModelID, "customvoice") || strings.Contains(d.ModelID, "voicedesign")) && f.Name == "voice-description" ||
-					!(vox || omni || qwen || breeze || ming || plapre || drama) && f.Name == "reference-text" {
+					!(vox || omni || qwen || breeze || ming || plapre || drama || audio8) && f.Name == "reference-text" {
 					unsupported = f.Name
 				}
 			})
@@ -332,7 +337,7 @@ func run(ctx context.Context, args []string, out, progress io.Writer) error {
 					d.VoxMode = "continuation"
 				}
 			}
-			if (omni || breeze || ming || plapre || drama) && d.VoiceMode == "" {
+			if (omni || breeze || ming || plapre || drama || audio8) && d.VoiceMode == "" {
 				d.VoiceMode = "design"
 				if reference != "" || voice != "" {
 					d.VoiceMode = "clone"
@@ -341,7 +346,7 @@ func run(ctx context.Context, args []string, out, progress io.Writer) error {
 			if omni && ((d.VoiceMode == "design" && d.ReferenceText != "") || (d.VoiceMode == "clone" && d.VoiceDescription != "")) {
 				return fmt.Errorf("OmniVoice 声音设计使用 --voice-description；克隆使用参考音频和 --reference-text")
 			}
-			if (breeze || ming || plapre || drama) && d.VoiceMode == "design" && d.ReferenceText != "" {
+			if (breeze || ming || plapre || drama || audio8) && d.VoiceMode == "design" && d.ReferenceText != "" {
 				return fmt.Errorf("%s 的 --reference-text 需要 clone 模式", model.Name)
 			}
 			if reference != "" && voice != "" {
@@ -483,10 +488,11 @@ func run(ctx context.Context, args []string, out, progress io.Writer) error {
 		}
 		result = w.Store.Read().RuntimePath
 	case "models download":
-		p := w.Store.Read().Preferences
-		p.DownloadSource = source
-		if err = w.SavePreferences(p); err == nil {
-			err = waitModel(func() error { return w.DownloadModel(operand, "") })
+		err = waitModel(func() error { return w.DownloadModelFromSource(operand, "", source) })
+		if err == nil && source != "" {
+			p := w.Store.Read().Preferences
+			p.DownloadSource = source
+			err = w.SavePreferences(p)
 		}
 		result = w.Store.Read().Models
 	case "separate":

@@ -4,6 +4,7 @@ package score
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"math"
@@ -77,9 +78,26 @@ func Render(ctx context.Context, sf *meltysynth.SoundFont, s schema.Score, outpu
 	if e := schema.ValidateScore(&s); e != nil {
 		return e
 	}
+	tracks := slices.DeleteFunc(slices.Clone(s.Tracks), func(t schema.ScoreTrack) bool { return t.Mute })
+	if stems != "" {
+		info, e := os.Stat(stems)
+		if e != nil {
+			return e
+		}
+		if !info.IsDir() {
+			return fmt.Errorf("分轨路径不是目录：%s", stems)
+		}
+		for i, t := range tracks {
+			path := filepath.Join(stems, stemName(i, t))
+			if _, e := os.Lstat(path); e == nil {
+				return fmt.Errorf("输出文件已存在：%s", path)
+			} else if !errors.Is(e, os.ErrNotExist) {
+				return e
+			}
+		}
+	}
 	frames := int(math.Ceil((s.Duration() + tailSeconds) * SampleRate))
 	mixL, mixR := make([]float32, frames), make([]float32, frames)
-	tracks := slices.DeleteFunc(slices.Clone(s.Tracks), func(t schema.ScoreTrack) bool { return t.Mute })
 	for i, t := range tracks {
 		if e := ctx.Err(); e != nil {
 			return e
@@ -96,6 +114,9 @@ func Render(ctx context.Context, sf *meltysynth.SoundFont, s schema.Score, outpu
 			}
 		}
 		if stems != "" {
+			if e = ctx.Err(); e != nil {
+				return e
+			}
 			if e = WriteWAV(filepath.Join(stems, stemName(i, t)), left, right); e != nil {
 				return e
 			}
@@ -109,6 +130,9 @@ func Render(ctx context.Context, sf *meltysynth.SoundFont, s schema.Score, outpu
 		}
 	}
 	limit(mixL, mixR)
+	if e := ctx.Err(); e != nil {
+		return e
+	}
 	return WriteWAV(output, mixL, mixR)
 }
 
@@ -144,10 +168,8 @@ func renderTrack(ctx context.Context, sf *meltysynth.SoundFont, s schema.Score, 
 	left, right := make([]float32, frames), make([]float32, frames)
 	next := 0
 	for start := 0; start < frames; start += block {
-		if start%(SampleRate*4) == 0 {
-			if e := ctx.Err(); e != nil {
-				return nil, nil, e
-			}
+		if e := ctx.Err(); e != nil {
+			return nil, nil, e
 		}
 		end := min(start+block, frames)
 		if len(t.Dynamics) > 0 {

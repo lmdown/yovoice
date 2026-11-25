@@ -218,6 +218,9 @@
   "@yovoice.create.maxTokens": {
     "defaultMessage": "最大生成長度"
   },
+  "@yovoice.create.referencePerformance": {
+    "defaultMessage": "參考演繹"
+  },
   "@yovoice.create.mode.reference": {
     "defaultMessage": "參考演繹"
   },
@@ -4217,6 +4220,9 @@
   "@yovoice.settings.modelDesc.drama": {
     "defaultMessage": "說話者與事件標籤 · 預設音色與音色複製 · 44.1 kHz"
   },
+  "@yovoice.settings.modelDesc.audio8": {
+    "defaultMessage": "11 種語言 · 預設音色與音色複製 · 44.1 kHz"
+  },
   "@yovoice.options.silence_duration_sec": {
     "defaultMessage": "段落間靜音（秒）"
   },
@@ -4951,6 +4957,9 @@
   },
   "@yovoice.community.lyricsUnaligned": {
     "defaultMessage": "歌詞還沒對齊，社群頁不會顯示歌詞。可以先在播放頁對齊後再分享。"
+  },
+  "@yovoice.community.skipLyrics": {
+    "defaultMessage": "不帶歌詞分享"
   },
   "@yovoice.community.terms": {
     "defaultMessage": "我有權分享這首歌，並同意社群條款"
@@ -6032,6 +6041,9 @@
   "@yovoice.voice.noGenerated": {
     "defaultMessage": "尚無生成的語音。生成後可在這裡選為參考音訊。"
   },
+  "@yovoice.voice.noVoices": {
+    "defaultMessage": "還沒有參考音訊。匯入或錄製音訊後可在這裡選用。"
+  },
   "@yovoice.voice.excerptTranscriptHelp": {
     "defaultMessage": "原文須與節選一致。調整範圍後請重新填寫，或稍後使用語音辨識。"
   },
@@ -6061,5 +6073,107 @@
   },
   "@yovoice.history.snapshotHelp": {
     "defaultMessage": "這是生成時儲存的設定快照，不隨目前作品或角色設定改變。未記錄的引擎預設值、硬體和模型檔案版本不會從目前設定補寫。"
+  },
+  "@yovoice.ming.control": {
+    "defaultMessage": "控制方式"
+  },
+  "@yovoice.ming.controlHelp": {
+    "defaultMessage": "每次生成只使用一種控制方式。"
+  },
+  "@yovoice.ming.control.voice_design": {
+    "defaultMessage": "聲音描述"
+  },
+  "@yovoice.ming.control.ip": {
+    "defaultMessage": "內建音色"
+  },
+  "@yovoice.ming.control.emotion": {
+    "defaultMessage": "情感"
+  },
+  "@yovoice.ming.control.dialect": {
+    "defaultMessage": "方言"
+  },
+  "@yovoice.ming.control.basic": {
+    "defaultMessage": "語速 / 音高 / 音量"
+  },
+  "@yovoice.ming.control.freeform": {
+    "defaultMessage": "自由指令"
+  },
+  "@yovoice.ming.freeform": {
+    "defaultMessage": "自由指令"
+  },
+  "@yovoice.ming.freeformHelp": {
+    "defaultMessage": "用自然語言說明語氣、節奏和表達方式，不必描述音色。"
+  },
+  "@yovoice.ming.freeformPlaceholder": {
+    "defaultMessage": "例如：用溫柔、舒緩的聲音講睡前故事，像在輕聲安慰孩子。"
+  },
+  "@yovoice.ming.emotionVoices": {
+    "defaultMessage": "中文（可選情感）"
+  },
+  "@yovoice.ming.tagsHelp": {
+    "defaultMessage": "選一個加到正文末尾，讀到這裡時發出對應的聲音。"
+  },
+  "@yovoice.ming.emotion.happy": {
+    "defaultMessage": "高興"
+  },
+  "@yovoice.ming.emotion.sad": {
+    "defaultMessage": "悲傷"
+  },
+  "@yovoice.ming.emotion.angry": {
+    "defaultMessage": "憤怒"
+  },
+  "@yovoice.ming.emotion.fearful": {
+    "defaultMessage": "恐懼"
+  },
+  "@yovoice.ming.emotion.disgusted": {
+    "defaultMessage": "厭惡"
+  },
+  "@yovoice.ming.emotion.surprised": {
+    "defaultMessage": "驚訝"
+  },
+  "@yovoice.ming.emotion.neutral": {
+    "defaultMessage": "中性"
+  },
+  "@yovoice.ming.dialect.cantonese": {
+    "defaultMessage": "粵語"
+  },
+  "@yovoice.ming.dialect.chuanyu": {
+    "defaultMessage": "川渝話"
+  },
+  "@yovoice.ming.speed.slow": {
+    "defaultMessage": "慢"
+  },
+  "@yovoice.ming.speed.medium": {
+    "defaultMessage": "中"
+  },
+  "@yovoice.ming.speed.fast": {
+    "defaultMessage": "快"
+  },
+  "@yovoice.ming.level.low": {
+    "defaultMessage": "低"
+  },
+  "@yovoice.ming.level.medium": {
+    "defaultMessage": "中"
+  },
+  "@yovoice.ming.level.high": {
+    "defaultMessage": "高"
+  },
+  "@yovoice.options.template_name": {
+    "defaultMessage": "控制方式"
+  },
+  "@yovoice.options.emotion": {
+    "defaultMessage": "情感"
+  },
+  "@yovoice.options.dialect": {
+    "defaultMessage": "方言"
+  },
+  "@yovoice.options.speed": {
+    "defaultMessage": "語速"
+  },
+  "@yovoice.options.pitch": {
+    "defaultMessage": "音高"
+  },
+  "@yovoice.options.volume": {
+    "defaultMessage": "音量"
   }
 }

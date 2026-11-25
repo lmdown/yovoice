@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+	"time"
 	"yovoice/internal/audio"
 	"yovoice/internal/msg"
 	"yovoice/internal/schema"
@@ -155,6 +156,104 @@ func TestRenderAlignsTrackLevels(t *testing.T) {
 	cancel()
 	if err := Render(ctx, sf, s, filepath.Join(dir, "cancel.wav"), "", nil); !errors.Is(err, context.Canceled) {
 		t.Fatal(err)
+	}
+}
+
+func TestRenderRefusesExistingStems(t *testing.T) {
+	for _, kind := range []string{"file", "directory", "dangling-symlink", "invalid-parent"} {
+		t.Run(kind, func(t *testing.T) {
+			dir := t.TempDir()
+			stem := filepath.Join(dir, "02-drums.wav")
+			switch kind {
+			case "file":
+				testkit.Must(t, os.WriteFile(stem, []byte("original"), 0600))
+			case "directory":
+				testkit.Must(t, os.Mkdir(stem, 0700))
+			case "dangling-symlink":
+				testkit.Must(t, os.Symlink(filepath.Join(dir, "missing"), stem))
+			case "invalid-parent":
+				parent := filepath.Join(dir, "not-a-directory")
+				testkit.Must(t, os.WriteFile(parent, nil, 0600))
+				dir = parent
+			}
+			out := filepath.Join(t.TempDir(), "mix.wav")
+			calls := 0
+			err := Render(context.Background(), nil, sample(), out, dir, func(int, int) { calls++ })
+			if err == nil || calls != 0 {
+				t.Fatalf("应在渲染前拒绝已有分轨或无效路径：err=%v calls=%d", err, calls)
+			}
+			if _, err := os.Lstat(out); !os.IsNotExist(err) {
+				t.Fatalf("不应生成混音：%v", err)
+			}
+			if _, err := os.Lstat(filepath.Join(dir, "01-lead.wav")); err == nil {
+				t.Fatal("不应生成较早声部的分轨")
+			}
+		})
+	}
+}
+
+func TestRenderCancellation(t *testing.T) {
+	dir := t.TempDir()
+	font := filepath.Join(dir, "test.sf2")
+	testkit.Must(t, os.WriteFile(font, testkit.SoundFont(), 0600))
+	sf, err := LoadSoundFont(font)
+	testkit.Must(t, err)
+	for _, tc := range []struct {
+		name  string
+		setup func(*testing.T, *schema.Score, context.CancelFunc) (func(int, int), <-chan time.Time)
+	}{
+		{"during-render", func(t *testing.T, s *schema.Score, cancel context.CancelFunc) (func(int, int), <-chan time.Time) {
+			s.Tracks[0].Notes = nil
+			for pitch := 0; pitch < 128; pitch++ {
+				s.Tracks[0].Notes = append(s.Tracks[0].Notes, schema.ScoreNote{Bar: 1, Beat: 1, Pitch: pitch, Length: 16, Velocity: 80})
+			}
+			cancelledAt := make(chan time.Time, 1)
+			timer := time.AfterFunc(100*time.Millisecond, func() {
+				cancelledAt <- time.Now()
+				cancel()
+			})
+			t.Cleanup(func() { timer.Stop() })
+			return nil, cancelledAt
+		}},
+		{"last-progress", func(_ *testing.T, _ *schema.Score, cancel context.CancelFunc) (func(int, int), <-chan time.Time) {
+			return func(done, total int) {
+				if done == total {
+					cancel()
+				}
+			}, nil
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := sample()
+			s.Sections = nil
+			s.Tracks = s.Tracks[:1]
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			out := filepath.Join(t.TempDir(), "cancel.wav")
+			progress, cancelledAt := tc.setup(t, &s, cancel)
+			start := time.Now()
+			err := Render(ctx, sf, s, out, "", progress)
+			returnedAt := time.Now()
+			elapsed := time.Since(start)
+			_, statErr := os.Stat(out)
+			t.Logf("elapsed=%s err=%v output_exists=%t", elapsed, err, statErr == nil)
+			if !errors.Is(err, context.Canceled) {
+				t.Errorf("应返回取消错误：%v", err)
+			}
+			if !errors.Is(statErr, os.ErrNotExist) {
+				t.Errorf("取消后不应生成输出：%v", statErr)
+			}
+			if cancelledAt != nil {
+				select {
+				case at := <-cancelledAt:
+					if latency := returnedAt.Sub(at); latency > time.Second {
+						t.Errorf("取消未及时返回：%s", latency)
+					}
+				default:
+					t.Error("渲染在定时取消前已返回")
+				}
+			}
+		})
 	}
 }
 

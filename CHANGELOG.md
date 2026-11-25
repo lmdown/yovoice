@@ -6,24 +6,45 @@
 
 ### English
 
-- Fix data loss: generating speech no longer silently deletes older takes after ten versions. API history and completed story takes are also retained during generation, startup and residual cleanup until explicitly deleted.
-- Reference audio supports drag and drop and selecting generated speech from history, with audition, excerpt selection and an editable transcript. Saved references retain their source and remain usable after the original generation is deleted.
-- Qwen3 CustomVoice now labels its optional delivery instructions as style guidance and explains how they work with the built-in speaker.
-- Generation history shows model tags and a read-only configuration view with the saved text, time, seed and parameters, plus JSON export. The same view is available while selecting historical speech as a reference.
-- Settings › Models lists additional self-quantized tiers (IndexTTS 2 and 2.5 in Q3/Q4, Qwen3-TTS in Q3/Q4, YuE2 3B in Q3) downloaded from ModelScope. They are merged from a separate add-on manifest, so the bundled model catalog stays untouched.
-- Double-clicking the macOS title bar now zooms the window (maximize/restore), matching Windows, instead of following the system double-click preference.
-- The workbench can now run in a plain browser without a native shell: opening the local service with the session token (`?token=…`, as printed by the script launcher) issues the session cookie and lands on the app directly. The script launcher can bind a fixed port via `YOVOICE_PORT`; without it a random port is kept.
-- Model downloads now run through the official ModelScope and Hugging Face tools from a bundled Python environment when one is installed, showing live progress in the app; without that environment they fall back to the built-in downloader. Pinned SHA-256 checks are now advisory: a mismatch (for example after a self-quantized tier is re-uploaded under the same file name) is logged but no longer blocks the download, and the file size follows the server. Pausing and resuming an SDK download now keeps its progress and continues from where it stopped instead of the bar dropping to zero and restarting from scratch; an interrupted download also restores its real progress from the partial files on disk after a restart, and the download log records the target directory.
+- macOS and Windows check for updates through a small file published with each release instead of the GitHub API, so a shared network that has used up GitHub's hourly limit no longer makes updates fail. On macOS, when GitHub does limit checks, the app says so and when to try again; other update errors show their HTTP status.
 
 ### 简体中文
-- 修复音频丢失：语音生成不再达到十次后自动删除较早版本及原音频；接口历史和已完成的故事逐句版本也不会在生成、启动或清理残留时自动删除，保留到用户明确删除。
-- 参考音频支持拖入文件，以及从生成历史选择语音、试听、截取节选并编辑原文；保存的样本保留来源，删除原生成记录后仍可使用。
-- Qwen3 CustomVoice 将可选的演绎指令标为“风格指导”，说明其与内置音色的关系。
-- 生成历史新增模型标签和只读的生成配置详情，可查看保存的文字、时间、随机种子与参数并导出 JSON；选择历史语音作为参考时也可查看。
-- 设置 › 模型新增更多自量化档（IndexTTS 2 与 2.5 的 Q3/Q4、Qwen3-TTS 的 Q3/Q4、YuE2 3B 的 Q3），从 ModelScope 下载。它们由一份独立的附加清单并入，不改动内置的模型目录。
-- macOS 双击标题栏现在会缩放窗口（最大化/还原），与 Windows 一致，不再跟随系统的双击偏好。
-- 装了随附的 Python 环境时，模型下载改用官方 ModelScope / Hugging Face 工具，界面里能看到实时进度；没有该环境时自动回退到内建下载器。钉死的 SHA-256 校验改为仅参考：不一致时（例如自量化档用同名文件重新上传后）只记一条日志，不再阻止下载，文件大小也以服务器实际为准。SDK 下载暂停时进度条会保持当前位置、点“继续”从断点续传，不再归零重下；下载被打断后重启也会按磁盘上已有的分片恢复真实进度（不再一进模型页就显示 0）；下载日志里也会记录目标目录。
-- 不依赖桌面壳也能在纯浏览器中使用：本地服务首页携带会话凭证（`?token=…`，由启动脚本打印）访问时自动发放鉴权 cookie 并直接进入工作台。启动脚本可用 `YOVOICE_PORT` 固定端口，不设则仍用随机端口。
+
+- macOS 和 Windows 改为从每个版本附带的小文件检查更新，不再依赖 GitHub 接口；多人共用的网络用光了 GitHub 每小时的查询次数时，不会再更新失败。macOS 上遇到 GitHub 限制检查次数时会说明原因和多久后可重试，其他更新错误会显示 HTTP 状态码。
+
+## [0.9.0] - 2026-11-22
+
+### English
+
+- Fix data loss: generating speech no longer deletes older takes after ten versions. API history and completed story takes are also kept until you delete them.
+- New speech model Audio8 TTS Realistic 0.6B (Q8 / BF16): default voice and voice cloning in 11 languages with automatic detection, 44.1 kHz output; cloning needs the reference transcript.
+- Ming 3.0 TTS adds control modes: built-in voices from a list (some with emotion variants), emotion, dialect (Cantonese, Sichuan-Chongqing), speed / pitch / volume and free-form instructions, plus tags such as [Laughter] in the text. Qwen3 CustomVoice labels its optional instructions as style guidance.
+- Reference audio: drag in a file or pick generated speech from history, audition it, select an excerpt and edit its transcript. Saved references keep their source and still work after the original generation is deleted. The picker says when the library is empty or a search finds nothing.
+- Generation history shows model tags and a read-only view of the saved text, time, seed and parameters, with JSON export.
+- Story narration evens out each line's loudness as it is generated. Importing a book recognizes “Name: line” scripts and casts each name as a role, and Import book is also in the New project menu.
+- Sharing a song to the community can skip lyrics, so unaligned lyrics no longer hold up sharing.
+- Scores: exporting large scores to MIDI is faster, stem export refuses to overwrite existing files, and cancelling rendering stops promptly without saving a WAV.
+- CLI model downloads use the saved download source; a failed download no longer changes it.
+- macOS: switching the interface language relabels the whole menu bar right away. Windows: when GitHub rate-limits update checks, the app says so and when to try again.
+- Fixes: Linux freezing on WebKitGTK 2.50 when opening the Model menu or leaving Settings, and the first-run tour spotlight on Linux; the microphone staying on after quickly cancelling a recording or leaving the page; dropped characters when typing fast in a draft; enabling the Local API right after changing its port; clipped labels in Expression options, the Speech sidebar and Settings › Assets tables; errors when switching pages quickly.
+
+### 简体中文
+
+- 修复音频丢失：语音生成不再在十个版本后删除较早的版本；接口历史和已完成的故事逐句版本也一直保留，直到你自己删除。
+- 新增语音模型 Audio8 TTS Realistic 0.6B（Q8 / BF16）：默认音色与音色克隆，自动识别 11 种语言，44.1 kHz 输出；克隆需填写参考原文。
+- Ming 3.0 TTS 新增控制方式：从列表选内置音色（部分可选情感）、情感、方言（粤语、川渝话）、语速 / 音高 / 音量和自由指令，正文可插入 [Laughter] 等标签。Qwen3 CustomVoice 的可选指令改称“风格指导”。
+- 参考音频：可以拖入文件，或从生成历史里选语音，试听、截取节选并编辑原文；保存的样本保留来源，删除原生成记录后仍可使用。参考音频库为空或搜索没有结果时会提示。
+- 生成历史显示模型标签，可查看保存的文字、时间、随机种子与参数，并导出 JSON。
+- 故事配音逐句生成时统一响度；导入小说能识别“角色：台词”格式的剧本并按名字分角色，“新建作品”菜单里也能直接导入小说。
+- 分享歌曲到社区时可以不带歌词，歌词没对齐也能直接分享。
+- 编曲：大谱子导出 MIDI 更快，分轨导出不再覆盖已有文件，取消渲染后及时停止、不保存 WAV。
+- 命令行下载模型沿用已保存的下载来源，下载失败不再改动它。
+- macOS 切换界面语言后整个菜单栏立即换成新语言；Windows 上 GitHub 限制更新检查时，会说明原因和可重试的时间。
+- 修复：Linux 在 WebKitGTK 2.50 上打开模型菜单或离开设置时卡死，以及首次引导的聚光遮罩错位；快速取消录音或离开页面后麦克风仍开着；快速输入作品正文时丢字；改完本地接口端口后马上开启不生效；演绎选项、语音侧栏和“设置 › 资源”表格的文字被截断；快速切换页面时报错。
+
+### 贡献者 / Contributors
+
+@leemysw @david-bowiegxw
 
 ## [0.8.0] - 2026-11-15
 
@@ -43,6 +64,8 @@
 
 ### 简体中文
 
+- 修复修改本机接口端口后直接点击启用无效的问题，现在单击即可在新端口启动接口。
+- 加快大型乐谱导出 MIDI 的速度，导出内容保持不变。
 - 可以从播放器或版本菜单把歌曲分享到 yovoice 社区：在浏览器里登录，填写标题、标签和使用许可后连同对齐过的歌词提交审核，参考音色不会上传。歌曲生成好后 Ocho 会提示分享；设置 › 社区里可以查看分享过的作品和审核状态。
 - 歌曲封面按这首歌自己的响度起伏来画，和社区页一致；导出的 FLAC、M4A 和作品库唱片封套都用这张封面。
 - 快捷键：设置新增“快捷键”标签，按功能区列出全部快捷键，可修改、提示冲突与系统占用、恢复默认、按功能区关闭，导入导出时先预览变化；任意页面按 ⌘/（Ctrl+/）查看当前页可用的快捷键。快捷键不再作用到弹窗背后、不再吞掉 ⌥ / AltGr 打的字符或妨碍打字，部分默认按键避开了系统和输入法。

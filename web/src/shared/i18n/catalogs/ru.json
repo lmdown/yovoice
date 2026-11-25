@@ -218,17 +218,20 @@
   "@yovoice.create.maxTokens": {
     "defaultMessage": "Макс. длина генерации"
   },
-  "@yovoice.create.mode.reference": {
+  "@yovoice.create.referencePerformance": {
     "defaultMessage": "По референсу исполнения"
   },
+  "@yovoice.create.mode.reference": {
+    "defaultMessage": "Повтор"
+  },
   "@yovoice.create.mode.speaker": {
-    "defaultMessage": "Как в голосе"
+    "defaultMessage": "Авто"
   },
   "@yovoice.create.mode.text": {
-    "defaultMessage": "Текстовое описание"
+    "defaultMessage": "Текст"
   },
   "@yovoice.create.mode.vector": {
-    "defaultMessage": "Смесь эмоций"
+    "defaultMessage": "Эмоция"
   },
   "@yovoice.create.model": {
     "defaultMessage": "Модель"
@@ -4217,6 +4220,9 @@
   "@yovoice.settings.modelDesc.drama": {
     "defaultMessage": "Метки говорящего и событий · Голос по умолчанию и клонирование · 44,1 кГц"
   },
+  "@yovoice.settings.modelDesc.audio8": {
+    "defaultMessage": "11 языков · Голос по умолчанию и клонирование · 44,1 кГц"
+  },
   "@yovoice.options.silence_duration_sec": {
     "defaultMessage": "Пауза между фрагментами (секунды)"
   },
@@ -4951,6 +4957,9 @@
   },
   "@yovoice.community.lyricsUnaligned": {
     "defaultMessage": "Текст ещё не синхронизирован, поэтому на странице сообщества его не будет. Сначала его можно синхронизировать на странице воспроизведения."
+  },
+  "@yovoice.community.skipLyrics": {
+    "defaultMessage": "Поделиться без текста"
   },
   "@yovoice.community.terms": {
     "defaultMessage": "У меня есть право делиться этой песней, и я принимаю условия сообщества"
@@ -6032,6 +6041,9 @@
   "@yovoice.voice.noGenerated": {
     "defaultMessage": "Созданной речи пока нет. Сначала создайте речь, затем выберите её здесь как образец."
   },
+  "@yovoice.voice.noVoices": {
+    "defaultMessage": "Образцов пока нет. Импортируйте или запишите аудио, чтобы выбрать его здесь."
+  },
   "@yovoice.voice.excerptTranscriptHelp": {
     "defaultMessage": "Текст должен совпадать с выбранным фрагментом. После обрезки введите его заново или распознайте позже."
   },
@@ -6061,5 +6073,107 @@
   },
   "@yovoice.history.snapshotHelp": {
     "defaultMessage": "Настройки сохранены при генерации. Последующие изменения проекта или персонажа их не меняют. Незарегистрированные значения по умолчанию движка, оборудование и версии файлов модели не выводятся из текущих настроек."
+  },
+  "@yovoice.ming.control": {
+    "defaultMessage": "Управление"
+  },
+  "@yovoice.ming.controlHelp": {
+    "defaultMessage": "Каждая генерация использует один способ управления."
+  },
+  "@yovoice.ming.control.voice_design": {
+    "defaultMessage": "Описание голоса"
+  },
+  "@yovoice.ming.control.ip": {
+    "defaultMessage": "Встроенный голос"
+  },
+  "@yovoice.ming.control.emotion": {
+    "defaultMessage": "Эмоция"
+  },
+  "@yovoice.ming.control.dialect": {
+    "defaultMessage": "Диалект"
+  },
+  "@yovoice.ming.control.basic": {
+    "defaultMessage": "Темп / высота / громкость"
+  },
+  "@yovoice.ming.control.freeform": {
+    "defaultMessage": "Свободная инструкция"
+  },
+  "@yovoice.ming.freeform": {
+    "defaultMessage": "Свободная инструкция"
+  },
+  "@yovoice.ming.freeformHelp": {
+    "defaultMessage": "Опишите тон, темп и подачу своими словами; сам голос описывать не нужно."
+  },
+  "@yovoice.ming.freeformPlaceholder": {
+    "defaultMessage": "Например: расскажи сказку на ночь мягким, спокойным голосом, словно утешаешь ребёнка."
+  },
+  "@yovoice.ming.emotionVoices": {
+    "defaultMessage": "Китайский (с эмоциями)"
+  },
+  "@yovoice.ming.tagsHelp": {
+    "defaultMessage": "Выберите тег, чтобы добавить его в конец текста; в этом месте прозвучит соответствующий звук."
+  },
+  "@yovoice.ming.emotion.happy": {
+    "defaultMessage": "Радость"
+  },
+  "@yovoice.ming.emotion.sad": {
+    "defaultMessage": "Грусть"
+  },
+  "@yovoice.ming.emotion.angry": {
+    "defaultMessage": "Гнев"
+  },
+  "@yovoice.ming.emotion.fearful": {
+    "defaultMessage": "Страх"
+  },
+  "@yovoice.ming.emotion.disgusted": {
+    "defaultMessage": "Отвращение"
+  },
+  "@yovoice.ming.emotion.surprised": {
+    "defaultMessage": "Удивление"
+  },
+  "@yovoice.ming.emotion.neutral": {
+    "defaultMessage": "Нейтрально"
+  },
+  "@yovoice.ming.dialect.cantonese": {
+    "defaultMessage": "Кантонский"
+  },
+  "@yovoice.ming.dialect.chuanyu": {
+    "defaultMessage": "Сычуаньский диалект"
+  },
+  "@yovoice.ming.speed.slow": {
+    "defaultMessage": "Медленно"
+  },
+  "@yovoice.ming.speed.medium": {
+    "defaultMessage": "Средне"
+  },
+  "@yovoice.ming.speed.fast": {
+    "defaultMessage": "Быстро"
+  },
+  "@yovoice.ming.level.low": {
+    "defaultMessage": "Низкая"
+  },
+  "@yovoice.ming.level.medium": {
+    "defaultMessage": "Средняя"
+  },
+  "@yovoice.ming.level.high": {
+    "defaultMessage": "Высокая"
+  },
+  "@yovoice.options.template_name": {
+    "defaultMessage": "Управление"
+  },
+  "@yovoice.options.emotion": {
+    "defaultMessage": "Эмоция"
+  },
+  "@yovoice.options.dialect": {
+    "defaultMessage": "Диалект"
+  },
+  "@yovoice.options.speed": {
+    "defaultMessage": "Темп"
+  },
+  "@yovoice.options.pitch": {
+    "defaultMessage": "Высота"
+  },
+  "@yovoice.options.volume": {
+    "defaultMessage": "Громкость"
   }
 }
